@@ -1,20 +1,20 @@
-# kyverno-policies
+# kyverno-policies-ux
 
-This repository contains kyverno policies which Giant Swarm uses.
+This repository contains Kyverno policies which Giant Swarm uses for supporting the user experience in our clusters.
 
 ## Repository structure
 
 We implement an app according to the [general Giant Swarm app platform](https://docs.giantswarm.io/app-platform/) which relies on Helm for application management.
 
 The `policies` folder contains the policies which are then escaped to be compliant with helm specific syntax.
-We use `[[` and  `]]` delimeters to handle cases where variables should be managed by helm.
+We use `[[` and  `]]` delimiters to handle cases where variables should be managed by helm.
 
 The `hack` folder contains scripts which are used during local development and in CI.
 These scripts enable us to easily set up a local testing environment.
 
 ## Development
 
-There are only very few prerequists for local testing:
+There are only very few prerequisites for local testing:
 1. `make` has to be installed
 2. `kubectl` has to be installed
 3. `kind` has to be installed
@@ -42,7 +42,7 @@ We have tried to make the test setup as simple as possible but some python knowl
 
 The tests use [python fixtures](https://docs.pytest.org/en/6.2.x/fixture.html) extensively to set up any resources we need in our tests.
 
-All fixtures can be found in [ensure.py](https://github.com/giantswarm/kyverno-policies/blob/main/helm/tests/ensure.py).
+All fixtures can be found in [ensure.py](https://github.com/giantswarm/kyverno-policies-ux/blob/main/helm/tests/ensure.py).
 Each fixtures should be structured in a similar way. Let's follow an example for `AWSCluster`:
 ```python
 @pytest.fixture
