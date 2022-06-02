@@ -1,0 +1,36 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-cluster-label-service-priority
+  annotations:
+    policies.kyverno.io/title: Restrict changes of the 'giantswarm.io/service-priority' cluster label
+    policies.kyverno.io/subject: Clusters
+    policies.kyverno.io/description: >-
+      The service priority label only allows certain values. This policy constraints the label so
+      that if set, it must have one of the well-defined values. For more details, see
+      https://github.com/giantswarm/rfc/tree/main/classify-cluster-priority
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: restrict-label-value-changes
+      match:
+        resources:
+          kinds:
+            - "clusters.cluster.x-k8s.io/v*/Cluster"
+          selector:
+            matchLabels:
+              giantswarm.io/service-priority: "*"
+      validate:
+        message: "The `giantswarm.io/service-priority` label only accepts the values `highest`, `medium`, and `lowest`."
+        anyPattern:
+          - metadata:
+              labels:
+                giantswarm.io/service-priority: highest
+          - metadata:
+              labels:
+                giantswarm.io/service-priority: medium
+          - metadata:
+              labels:
+                giantswarm.io/service-priority: lowest
