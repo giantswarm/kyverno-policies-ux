@@ -20,4 +20,5 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.smoke
 def test_empty_test() -> None:
-    return
+    LOGGER.info("Dummy test here")
+    assert True == False
