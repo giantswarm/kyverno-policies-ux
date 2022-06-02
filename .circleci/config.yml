@@ -9,7 +9,7 @@ commands:
     parameters:
       ats_version:
         type: string
-        default: 0.1.4
+        default: 0.2.3
       chart_archive_prefix:
         type: string
       tests_dir:
@@ -40,7 +40,7 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     environment:
-      KYVERNO_VERSION: v1.5.0-rc3
+      KYVERNO_VERSION: v1.5.7
     steps:
       - checkout
       - run:
