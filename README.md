@@ -18,8 +18,8 @@ There are only very few prerequisites for local testing:
 1. `make` has to be installed
 2. `kubectl` has to be installed
 3. `kind` has to be installed
-4. [dabs.sh](https://raw.githubusercontent.com/giantswarm/app-build-suite/v1.0.4/dabs.sh) has to be accessible.
-5. [dats.sh](https://raw.githubusercontent.com/giantswarm/app-test-suite/v0.1.4/dats.sh) has to be accessible.
+4. [dabs.sh](https://raw.githubusercontent.com/giantswarm/app-build-suite/v1.1.2/dabs.sh) has to be accessible.
+5. [dats.sh](https://raw.githubusercontent.com/giantswarm/app-test-suite/v0.2.3/dats.sh) has to be accessible.
 
 Tests are implemented with [pytest](https://docs.pytest.org) with plugin [pytest-helm-charts](https://github.com/giantswarm/pytest-helm-charts).
 
