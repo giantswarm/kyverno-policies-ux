@@ -7,3 +7,5 @@ logs/
 # Used by Tilt extension to deploy remote Helm charts
 .helm
 policies-*.tgz
+.DS_Store
+/*.tgz
