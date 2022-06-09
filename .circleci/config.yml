@@ -9,7 +9,7 @@ commands:
     parameters:
       ats_version:
         type: string
-        default: 0.1.4
+        default: 0.2.3
       chart_archive_prefix:
         type: string
       tests_dir:
@@ -91,7 +91,7 @@ jobs:
             make dabs
       - run-ats:
           chart_archive_prefix: "kyverno-policies-ux"
-          tests_dir: "helm/kyverno-policies-ux/tests/ats"
+          tests_dir: "tests/ats"
       - run:
           name: Export kind logs
           when: always
