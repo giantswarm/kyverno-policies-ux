@@ -1,2 +1,8 @@
-skip-steps: ["functional", "upgrade"]
-smoke-tests-cluster-type: kind
+# This is needed as we are deploying several App CRs via fixtures.
+app-tests-skip-app-deploy: true
+
+skip-steps: [functional, upgrade]
+smoke-tests-cluster-type: external
+external-cluster-type: kind
+external-cluster-kubeconfig-path: ./kube.config
+external-cluster-version: "1.21.1"
