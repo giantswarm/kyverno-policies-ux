@@ -1,4 +1,6 @@
-# This is needed as we are deploying several App CRs via fixtures.
+# This is needed as we must deploy Kyverno
+# before we can deploy this app's chart, so
+# we are doing this via fixtures.
 app-tests-skip-app-deploy: true
 
 skip-steps: [functional, upgrade]
