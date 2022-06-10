@@ -3,8 +3,7 @@ from pytest_helm_charts.k8s.deployment import wait_for_deployments_to_run
 import logging
 import pykube
 import pytest
-import sys
-import os
+import time
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,5 +36,7 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.info("Deploy Kyverno policies for the service-priority cluster label")
     ret = kube_cluster.kubectl("apply", filename="../../policies/ux/clusters-label-service-priority.yaml", output_format="json")
     LOGGER.debug(f"Created kyverno policies result: {ret}")
+
+    time.sleep(5)
 
     return True
