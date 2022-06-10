@@ -15,12 +15,17 @@ spec:
   rules:
     - name: restrict-label-value-changes
       match:
-        resources:
-          kinds:
-            - "clusters.cluster.x-k8s.io/v*/Cluster"
-          selector:
-            matchLabels:
-              giantswarm.io/service-priority: "*"
+        any:
+          - resources:
+              kinds:
+                - cluster.x-k8s.io/v1alpha1/Cluster
+                - cluster.x-k8s.io/v1alpha2/Cluster
+                - cluster.x-k8s.io/v1alpha3/Cluster
+                - cluster.x-k8s.io/v1alpha4/Cluster
+                - cluster.x-k8s.io/v1beta1/Cluster
+              selector:
+                matchLabels:
+                  giantswarm.io/service-priority: "*"
       validate:
         message: "The `giantswarm.io/service-priority` label only accepts the values `highest`, `medium`, and `lowest`."
         anyPattern:
