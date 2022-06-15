@@ -1,10 +1,11 @@
 SHELL:=/usr/bin/env bash
 
 # Kind cluster name to use
-KIND_CLUSTER_NAME ?= "kyverno-cluster"
+KIND_CLUSTER_NAME ?= kyverno-cluster
 
 # If not already set through env
 KUBERNETES_VERSION ?= v1.21.1
+KYVERNO_VERSION ?= v1.5.7
 
 ##@ Generate
 
@@ -35,7 +36,7 @@ tilt-up: ## Start Tilt
 # If you change kyverno version here remember to change it in the Tiltfile too
 .PHONY: install-kyverno
 install-kyverno:
-	kubectl create --context kind-$(KIND_CLUSTER_NAME) -f https://raw.githubusercontent.com/kyverno/kyverno/v1.5.1/definitions/release/install.yaml
+	kubectl create --context kind-$(KIND_CLUSTER_NAME) -f https://raw.githubusercontent.com/kyverno/kyverno/$(KYVERNO_VERSION)/definitions/release/install.yaml
 	kubectl wait --context kind-$(KIND_CLUSTER_NAME) --for=condition=ready pod -l app=kyverno -nkyverno
 
 .PHONY: kind-get-kubeconfig
