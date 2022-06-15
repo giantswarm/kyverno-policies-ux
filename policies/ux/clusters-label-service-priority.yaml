@@ -18,10 +18,6 @@ spec:
         any:
           - resources:
               kinds:
-                - cluster.x-k8s.io/v1alpha1/Cluster
-                - cluster.x-k8s.io/v1alpha2/Cluster
-                - cluster.x-k8s.io/v1alpha3/Cluster
-                - cluster.x-k8s.io/v1alpha4/Cluster
                 - cluster.x-k8s.io/v1beta1/Cluster
               selector:
                 matchLabels:
