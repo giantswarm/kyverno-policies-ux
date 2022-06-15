@@ -38,3 +38,6 @@ spec:
           - metadata:
               labels:
                 giantswarm.io/service-priority: lowest
+          - metadata:
+              labels:
+                X(giantswarm.io/service-priority): "*"

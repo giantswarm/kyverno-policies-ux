@@ -1,6 +1,7 @@
 dabs.sh
 dats.sh
 kube.config
+.vscode
 build/
 logs/
 *test_results_smoke.xml

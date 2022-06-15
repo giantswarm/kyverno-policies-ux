@@ -21,11 +21,6 @@ def fixtures(kube_cluster: Cluster):
     ret = kube_cluster.kubectl("apply", filename="cluster-crd.yaml", output_format="json")
     LOGGER.debug("Created cluster CRD")
 
-    # Test cluster CR
-    LOGGER.info("Create cluster.x-k8s.io/v1alpha3 named 'test-cluster'")
-    ret = kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
-    LOGGER.debug(f"Created cluster result: {ret}")
-
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
     ret = kube_cluster.kubectl("apply", filename=f"https://raw.githubusercontent.com/kyverno/kyverno/{KYVERNO_VERSION}/definitions/release/install.yaml", output_format="json")
@@ -36,6 +31,11 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.info("Deploy Kyverno policies for the service-priority cluster label")
     ret = kube_cluster.kubectl("apply", filename="../../policies/ux/clusters-label-service-priority.yaml", output_format="json")
     LOGGER.debug(f"Created kyverno policies result: {ret}")
+
+    # Test cluster CR
+    LOGGER.info("Create cluster.x-k8s.io/v1beta1 named 'test-cluster'")
+    ret = kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
+    LOGGER.debug(f"Created cluster result: {ret}")
 
     time.sleep(5)
 
