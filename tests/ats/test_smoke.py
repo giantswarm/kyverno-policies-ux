@@ -103,11 +103,8 @@ def test_service_priority_cluster_label_remove(fixtures, kube_cluster: Cluster) 
     LOGGER.info(f"Attempt to set valid service-priority label - result: {cluster}")
 
     # Remove label
-    subprocess.check_output(
-        kube_cluster.kubectl(
-            f"label clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}-"
-        ),
-        stderr=subprocess.STDOUT
+    cluster = kube_cluster.kubectl(
+        f"label clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}-"
     )
     assert SERVICE_PRIORITY_LABEL not in cluster["metadata"]["labels"]
 
