@@ -23,7 +23,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
-    ret = kube_cluster.kubectl("apply", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply --server-side", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
     wait_for_deployments_to_run(kube_cluster.kube_client, deployment_names=["kyverno"], deployments_namespace="kyverno", timeout_sec=100)
     LOGGER.debug(f"Install Kyverno result: {ret}")
 
