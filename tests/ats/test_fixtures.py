@@ -8,7 +8,7 @@ import time
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.5.7"
+KYVERNO_VERSION = "v1.8.5"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):
