@@ -1,0 +1,38 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-organization-deletion-if-has-clusters
+  annotations:
+    policies.kyverno.io/title: Block organization deletion if there are clusters that belong to the organization
+    policies.kyverno.io/subject: Organizations
+    policies.kyverno.io/description: >-
+      We want to block the deletion of organizations that still have clusters on them.
+      This would prevent deleting organizations by mistake, as you need to empty the organization first.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+  - name: block-organization-deletion-if-has-clusters
+    match:
+      any:
+      - resources:
+          kinds:
+          - Organization
+    context:
+      - name: clusterCount
+        apiCall:
+          urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/org-{{request.object.metadata.name}}/clusters"
+          jmesPath: "items | length(@)"
+    preconditions:
+      any:
+      - key: "{{clusterCount}}"
+        operator: GreaterThan
+        value: "0"
+    validate:
+      message: "There are Clusters that belong to this organization. If you want to remove the organization, first remove the clusters."
+      deny:
+        conditions:
+        - key: "{{request.operation}}"
+          operator: In
+          value:
+          - DELETE

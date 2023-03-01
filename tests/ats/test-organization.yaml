@@ -1,0 +1,24 @@
+---
+apiVersion: security.giantswarm.io/v1alpha1
+kind: Organization
+metadata:
+  name: giantswarm
+spec: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    kubernetes.io/metadata.name: org-giantswarm
+    name: org-giantswarm
+  name: org-giantswarm
+spec: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    kubernetes.io/metadata.name: org-empty
+    name: org-empty
+  name: org-empty
+spec: {}

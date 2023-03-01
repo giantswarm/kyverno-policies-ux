@@ -129,3 +129,36 @@ def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Clus
       assert cluster["metadata"]["labels"][SERVICE_PRIORITY_LABEL] != "badvalue"
       assert SERVICE_PRIORITY_LABEL in output
       assert "validate.kyverno.svc-fail" in output
+
+
+@pytest.mark.smoke
+def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
+  with pytest.raises(subprocess.CalledProcessError):
+      """
+      Checks whether our policy prevents deleting organization that still have clusters on them.
+      """
+
+      LOGGER.info("Attempt to delete organization with existing clusters")
+      output = subprocess.check_output(
+          kube_cluster.kubectl(
+              f"delete organization giantswarm"
+              ),
+          stderr=subprocess.STDOUT
+      )
+      LOGGER.info(f"Attempt to set invalid service-priority label - result: {cluster}")
+      assert "organization" in output
+      assert "validate.kyverno.svc-fail" in output
+
+
+@pytest.mark.smoke
+def test_allows_organization_deletion_when_it_has_no_clusters(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents deleting organization that still have clusters on them.
+    """
+
+    LOGGER.info("Attempt to delete organization with no clusters on it")
+    try:
+        res = kube_cluster.kubectl("delete", filename="test-empty-organization.yaml", output_format=""),
+    except:
+        if res.stdout != "organization.security.giantswarm.io \"empty\" deleted":
+            raise

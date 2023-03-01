@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Push to cloud-director app collection.
 - Push to `capz` app collection.
 - Bump `clusterctl`, `kind` and `kyverno` versions from tests.
+- Add policy that blocks the deletion of `Organizations` if they still have `Clusters`.
 
 ### Changed
 
