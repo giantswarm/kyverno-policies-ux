@@ -48,10 +48,10 @@ def fixtures(kube_cluster: Cluster):
 
     # This block is commented because k8s v1.24 is needed to use '--subresource', and at the time of writing this, dats/dabs is broken and we can't specify which version to use.
     # Patch Organizations so that they contain their namespace on their status field, like organization-operator does
-    # ret = kube_cluster.kubectl(f"patch organization giantswarm --subresource status --patch-file organization-giantswarm-patch.yaml")
-    # LOGGER.debug(f"Patched giantswarm organization status with namespace: {ret}")
-    # ret = kube_cluster.kubectl(f"patch organization empty --subresource status --patch-file organization-empty-patch.yaml")
-    # LOGGER.debug(f"Patched empty organization status with namespace: {ret}")
+    ret = kube_cluster.kubectl("patch organization giantswarm --subresource status --type merge --patch '{\"status\": {\"namespace\": \"org-giantswarm\"}}'")
+    LOGGER.debug(f"Patched giantswarm organization status with namespace: {ret}")
+    ret = kube_cluster.kubectl("patch organization empty --subresource status --type merge --patch '{\"status\": {\"namespace\": \"org-empty\"}}'")
+    LOGGER.debug(f"Patched empty organization status with namespace: {ret}")
 
     # Test cluster CR
     LOGGER.info("Create cluster.x-k8s.io/v1beta1 named 'test-cluster'")
