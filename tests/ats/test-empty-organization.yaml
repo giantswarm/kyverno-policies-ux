@@ -4,3 +4,12 @@ kind: Organization
 metadata:
   name: empty
 spec: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    kubernetes.io/metadata.name: org-empty
+    name: org-empty
+  name: org-empty
+spec: {}

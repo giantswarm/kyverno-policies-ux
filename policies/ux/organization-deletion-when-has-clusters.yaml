@@ -9,7 +9,7 @@ metadata:
       We want to block the deletion of organizations that still have clusters on them.
       This would prevent deleting organizations by mistake, as you need to empty the organization first.
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: Enforce
   background: false
   rules:
   - name: block-organization-deletion-if-has-clusters
