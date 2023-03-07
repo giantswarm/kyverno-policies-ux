@@ -5,7 +5,7 @@ KIND_CLUSTER_NAME ?= kyverno-cluster
 
 # If not already set through env
 KUBERNETES_VERSION ?= v1.24.7
-KYVERNO_VERSION ?= v1.8.5
+KYVERNO_VERSION ?= v1.9.0
 
 ##@ Generate
 
