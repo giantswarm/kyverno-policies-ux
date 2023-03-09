@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2023-03-09
+
 ### Fixed
 
 - Add default value when trying to look up the organization namespace from the organization status field, as this may be empty when the organization was just created.
@@ -43,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.0.1...v0.1.0
