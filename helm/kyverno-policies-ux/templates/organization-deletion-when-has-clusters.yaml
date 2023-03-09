@@ -22,13 +22,14 @@ spec:
     context:
       - name: clusterCount
         apiCall:
-          urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}request.oldObject.status.namespace{{ `}}` }}/clusters"
+          urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}request.oldObject.status.namespace || ''{{ `}}` }}/clusters"
           jmesPath: "items | length(@)"
     preconditions:
-      any:
-      - key: "{{ `{{` }}clusterCount{{ `}}` }}"
-        operator: GreaterThan
-        value: "0"
+      all:
+      - key: "{{ `{{` }} request.operation {{ `}}` }}"
+        operator: In
+        value:
+        - DELETE
     validate:
       message: "There are currently {{ `{{` }}clusterCount{{ `}}` }} clusters that belong to this organization. If you want to remove the organization, first remove the clusters."
       deny:
@@ -37,3 +38,6 @@ spec:
           operator: In
           value:
           - DELETE
+        - key: "{{ `{{` }}clusterCount{{ `}}` }}"
+          operator: GreaterThan
+          value: "0"

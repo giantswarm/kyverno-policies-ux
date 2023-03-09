@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Add default value when trying to look up the organization namespace from the organization status field, as this may be empty when the organization was just created.
+
 ## [0.2.0] - 2023-03-07
 
 ### Added
