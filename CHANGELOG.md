@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop pushing to `openstack-app-collection`.
 
+### Changed
+
+- Improve/fix cluster label policy tests to also check error message.
+
 ## [0.2.3] - 2023-04-25
 
 ### Changed
