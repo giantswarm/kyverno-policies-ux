@@ -84,6 +84,7 @@ def test_service_priority_cluster_label_invalid_edit(fixtures, capfd, kube_clust
     _, stderr = capfd.readouterr()
 
     assert SERVICE_PRIORITY_LABEL in stderr
+    assert "restrict-label-value-changes" in stderr
     assert "validate.kyverno.svc-fail" in stderr
 
 
@@ -126,6 +127,7 @@ def test_service_priority_cluster_label_invalid_set(fixtures, capfd, kube_cluste
     _, stderr = capfd.readouterr()
 
     assert SERVICE_PRIORITY_LABEL in stderr
+    assert "restrict-label-value-changes" in stderr
     assert "validate.kyverno.svc-fail" in stderr
 
 
