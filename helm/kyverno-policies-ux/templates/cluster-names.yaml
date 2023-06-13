@@ -1,0 +1,43 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: cluster-names
+  annotations:
+    policies.kyverno.io/title: Restrict names of Clusters
+    policies.kyverno.io/subject: Clusters
+    policies.kyverno.io/description: >-
+      Cluster names must not be longer than 10 characters and never
+      start with a number.
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: cluster-name-maximum-length
+    match:
+      any:
+      - resources:
+          kinds:
+          - Cluster
+    validate:
+      message: "cluster name must be no longer than 10 characters"
+      deny:
+        conditions:
+          any:
+          - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
+            operator: GreaterThan
+            value: 10
+  - name: cluster-name-does-not-start-with-number
+    match:
+      any:
+      - resources:
+          kinds:
+          - Cluster
+    validate:
+      message: "cluster name must not start with a number"
+      deny:
+        conditions:
+          any:
+          - key: "{{ `{{` }} regex_match('^[0-9].*', '{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
+            operator: Equals
+            value: true
+

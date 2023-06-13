@@ -131,6 +131,83 @@ def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Clus
       assert "validate.kyverno.svc-fail" in output
 
 
+@pytest.mark.smoke
+@pytest.mark.capture_disabled
+def test_invalid_cluster_name(fixtures, capfd, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError):
+        """
+        Checks whether our policy prevents creating Cluster resources with
+        invalid names.
+        """
+
+        # Set invalid label value
+        LOGGER.info("Attempt to create cluster with invalid name")
+        output = subprocess.check_output(
+                kube_cluster.kubectl("apply", filename="invalid-clusters.yaml", output_format="json"), 
+                stderr=subprocess.STDOUT
+        )
+        LOGGER.info(f"Attempt to create cluster with invalid name - result: {output}")
+        assert "cluster-name-maximum-length" in output
+
+        # LOGGER.info("Attempt to create cluster with invalid name")
+        # # with pytest.raises(subprocess.CalledProcessError) as e:
+        # # with pytest.raises(Exception) as e:
+        # LOGGER.info(f"Attempt to create cluster with invalid name")
+        # try:
+        #     output = subprocess.check_output(
+        #         kube_cluster.kubectl("apply", filename="invalid-clusters.yaml", output_format="json"),
+        #         stderr=subprocess.STDOUT
+        #     )
+        # except subprocess.CalledProcessError as e:
+        #     LOGGER.info(f"After kubectl e: {e}")
+        # stdout, stderr = capfd.readouterr()
+        # LOGGER.info(f"captured stdout: {stdout}")
+        # LOGGER.info(f"captured stderr: {stderr}")
+        #
+        # with capfd.disabled():
+        #     LOGGER.info("works")
+        # try:
+        #     output = kube_cluster.kubectl("apply", filename="invalid-clusters.yaml", output_format="json")
+        #     assert False  # should raise exception
+        # except subprocess.CalledProcessError as e:
+        #     LOGGER.info("After kubectl - subprocess.CalledProcessError")
+        #     LOGGER.info(f"Attempted to create cluster with invalid name: {e}")
+        #     LOGGER.info(f"Stdout: {e.stdout}")
+        #     LOGGER.info(f"Stderr: {e.stdout}")
+        #     assert "cluster-name-maximum-length" in str(e)
+
+
+
+# @pytest.mark.smoke
+# def test_invalid_machinepool_name(fixtures, kube_cluster: Cluster) -> None:
+#     with pytest.raises(subprocess.CalledProcessError):
+#         """
+#         Checks whether our policy prevents creating MachinePool resources with
+#         invalid names.
+#         """
+#
+#         LOGGER.info("Attempt to create machinepool with invalid name")
+#         with pytest.raises(subprocess.CalledProcessError) as e:
+#             LOGGER.info(f"Attempt to create machinepool with invalid name - result: {e}")
+#             output = kube_cluster.kubectl("apply", filename="invalid-machinepools.yaml", output_format="json")
+#             assert "machinepool-name-maximum-length" in str(e.value)
+#
+#
+# @pytest.mark.smoke
+# def test_invalid_machinedeployment_name(fixtures, kube_cluster: Cluster) -> None:
+#     with pytest.raises(subprocess.CalledProcessError):
+#         """
+#         Checks whether our policy prevents creating MachineDeployment resources with
+#         invalid names.
+#         """
+#
+#         LOGGER.info("Attempt to create machinedeployment with invalid name")
+#         with pytest.raises(subprocess.CalledProcessError) as e:
+#             LOGGER.info(f"Attempt to create machinedeployment with invalid name - result: {e}")
+#             output = kube_cluster.kubectl("apply", filename="invalid-machinedeployments.yaml", output_format="json")
+#             assert "machinedeployment-name-maximum-length" in str(e.value)
+
+
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
 #   with pytest.raises(subprocess.CalledProcessError):
