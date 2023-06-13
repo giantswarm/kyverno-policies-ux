@@ -1,10 +1,10 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: cluster-names
+  name: restrict-machine-pool-names
   annotations:
-    policies.kyverno.io/title: Restrict names of Clusters
-    policies.kyverno.io/subject: Clusters
+    policies.kyverno.io/title: Restrict names of MachinePools
+    policies.kyverno.io/subject: MachinePools
     policies.kyverno.io/description: >-
       MachinePool names are of the form {CLUSTER_NAME}-{MD_NAME},
       therefore their total length must not exceed 21 (10 for CLUSTER_NAME

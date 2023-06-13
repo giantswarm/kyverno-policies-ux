@@ -5,6 +5,8 @@ import pykube
 import pytest
 import time
 
+
+TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
@@ -46,6 +48,10 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.debug(f"Created organization deletion policies result: {ret}")
     ret = kube_cluster.kubectl("apply", filename="../../policies/ux/cluster-names.yaml", output_format="json")
     LOGGER.debug(f"Created cluster names policies result: {ret}")
+    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/machine-deployment-names.yaml", output_format="json")
+    LOGGER.debug(f"Created machine deployment names policies result: {ret}")
+    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/machine-pool-names.yaml", output_format="json")
+    LOGGER.debug(f"Created machine pool names policies result: {ret}")
 
     # Create Organization namespace
     LOGGER.info("Create namespaces named 'org-giantswarm' and 'org-empty'")
@@ -62,7 +68,7 @@ def fixtures(kube_cluster: Cluster):
     # LOGGER.debug(f"Patched empty organization status with namespace: {ret}")
 
     # Test cluster CR
-    LOGGER.info("Create cluster.x-k8s.io/v1beta1 named 'test-cluster'")
+    LOGGER.info(f"Create cluster.x-k8s.io/v1beta1 named '{TEST_CLUSTER_NAME}'")
     ret = kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
     LOGGER.debug(f"Created cluster result: {ret}")
 

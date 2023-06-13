@@ -2,21 +2,21 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: test-cluster
+  name: test
   namespace: default
   labels:
     release.giantswarm.io/version: 1.2.3
-    giantswarm.io/cluster: test-cluster
-    cluster.x-k8s.io/cluster-name: test-cluster
+    giantswarm.io/cluster: test
+    cluster.x-k8s.io/cluster-name: test
 spec: {}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: test-cluster-organization-blocker
+  name: org-block
   namespace: org-giantswarm
   labels:
     release.giantswarm.io/version: 1.2.3
-    giantswarm.io/cluster: test-cluster-organization-blocker
-    cluster.x-k8s.io/cluster-name: test-cluster-organization-blocker
+    giantswarm.io/cluster: org-block
+    cluster.x-k8s.io/cluster-name: org-block
 spec: {}
