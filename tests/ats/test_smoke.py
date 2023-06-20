@@ -60,32 +60,32 @@ def test_service_priority_cluster_label_valid_edit(fixtures, kube_cluster: Clust
 
 
 @pytest.mark.smoke
-def test_service_priority_cluster_label_invalid_edit(fixtures, kube_cluster: Cluster) -> None:
-  with pytest.raises(subprocess.CalledProcessError):
-      """
-      Checks whether our policy to prevent invalid service-priority label
-      values is working.
-      """
-  
-      # Set valid label value
-      LOGGER.info(f"Attempt to set valid {SERVICE_PRIORITY_LABEL} label")
-      cluster = kube_cluster.kubectl(
-          f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=medium"
-      )
-      LOGGER.info(f"Attempt to set valid service-priority label - result: {cluster}")
-  
-      # Set invalid label value
-      LOGGER.info("Attempt to set invalid service-priority label")
-      output = subprocess.check_output(
-          kube_cluster.kubectl(
-              f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=badvalue"
-              ),
-          stderr=subprocess.STDOUT
-      )
-      LOGGER.info(f"Attempt to set invalid service-priority label - result: {cluster}")
-      assert cluster["metadata"]["labels"][SERVICE_PRIORITY_LABEL] != "badvalue"
-      assert SERVICE_PRIORITY_LABEL in output
-      assert "validate.kyverno.svc-fail" in output
+def test_service_priority_cluster_label_invalid_edit(fixtures, capfd, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError):
+        """
+        Checks whether our policy to prevent invalid service-priority label
+        values is working.
+        """
+
+        # Set valid label value
+        LOGGER.info(f"Attempt to set valid {SERVICE_PRIORITY_LABEL} label")
+        cluster = kube_cluster.kubectl(
+            f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=medium"
+        )
+        LOGGER.info(f"Attempt to set valid service-priority label - result: {cluster}")
+
+        # Set invalid label value
+        LOGGER.info("Attempt to set invalid service-priority label")
+        output = kube_cluster.kubectl(
+            f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=badvalue"
+        )
+        LOGGER.warn(f"Setting invalid service-priority label did not fail, output: {output}")
+
+    _, stderr = capfd.readouterr()
+
+    assert SERVICE_PRIORITY_LABEL in stderr
+    assert "restrict-label-value-changes" in stderr
+    assert "validate.kyverno.svc-fail" in stderr
 
 
 @pytest.mark.smoke
@@ -110,25 +110,25 @@ def test_service_priority_cluster_label_remove(fixtures, kube_cluster: Cluster) 
 
 
 @pytest.mark.smoke
-def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Cluster) -> None:
-  with pytest.raises(subprocess.CalledProcessError):
-      """
-      Checks whether our policy to prevent invalid service-priority label
-      values is working.
-      """
+def test_service_priority_cluster_label_invalid_set(fixtures, capfd, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError):
+        """
+        Checks whether our policy to prevent invalid service-priority label
+        values is working.
+        """
 
-      # Set invalid label value
-      LOGGER.info("Attempt to set invalid service-priority label")
-      output = subprocess.check_output(
-          kube_cluster.kubectl(
-              f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=badvalue"
-              ),
-          stderr=subprocess.STDOUT
-      )
-      LOGGER.info(f"Attempt to set invalid service-priority label - result: {cluster}")
-      assert cluster["metadata"]["labels"][SERVICE_PRIORITY_LABEL] != "badvalue"
-      assert SERVICE_PRIORITY_LABEL in output
-      assert "validate.kyverno.svc-fail" in output
+        # Set invalid label value
+        LOGGER.info("Attempt to set invalid service-priority label")
+        output = kube_cluster.kubectl(
+            f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=badvalue"
+        )
+        LOGGER.warn(f"Setting invalid service-priority label did not fail, output: {output}")
+
+    _, stderr = capfd.readouterr()
+
+    assert SERVICE_PRIORITY_LABEL in stderr
+    assert "restrict-label-value-changes" in stderr
+    assert "validate.kyverno.svc-fail" in stderr
 
 
 # @pytest.mark.smoke
