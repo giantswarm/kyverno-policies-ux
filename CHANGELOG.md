@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
 and forbid them to start with a number.
 
+### Changed
+
+- Improve/fix cluster label policy tests to also check error message.
+
 ## [0.2.3] - 2023-04-25
 
 ### Changed
