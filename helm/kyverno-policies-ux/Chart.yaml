@@ -2,8 +2,8 @@ apiVersion: v2
 name: kyverno-policies-ux
 appVersion: master
 description: Giant Swarm policies supporting user experience.
-home: https://github.com/giantswarm/kyverno-policies-ux
 icon: https://s.giantswarm.io/app-icons/kyverno/1/light.svg
+home: https://github.com/giantswarm/kyverno-policies-ux
 annotations:
   application.giantswarm.io/team: "rainbow"
   config.giantswarm.io/version: 1.x.x
