@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2023-06-20
+
 ### Removed
 
 - Stop pushing to `openstack-app-collection`.
@@ -73,7 +75,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.0...v0.2.1
