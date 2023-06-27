@@ -27,17 +27,3 @@ spec:
           - key: "{{ length('{{request.object.metadata.name}}') }}"
             operator: GreaterThan
             value: 21
-  - name: machine-pool-name-does-not-start-with-number
-    match:
-      any:
-      - resources:
-          kinds:
-          - MachinePool
-    validate:
-      message: "machine pool name must not start with a number"
-      deny:
-        conditions:
-          any:
-          - key: "{{ regex_match('^[0-9].*', '{{request.object.metadata.name}}') }}"
-            operator: Equals
-            value: true

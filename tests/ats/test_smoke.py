@@ -204,7 +204,6 @@ def test_invalid_machinepool_name(fixtures, capfd, kube_cluster: Cluster) -> Non
     _, stderr = capfd.readouterr()
     assert "validate.kyverno.svc-fail" in stderr
     assert "machine-pool-name-maximum-length" in stderr
-    assert "machine-pool-name-does-not-start-with-number" in stderr
 
 
 @pytest.mark.smoke
@@ -221,7 +220,6 @@ def test_invalid_machinedeployment_name(fixtures, capfd, kube_cluster: Cluster) 
 
     _, stderr = capfd.readouterr()
     assert "machine-deployment-name-maximum-length" in stderr
-    assert "machine-deployment-name-does-not-start-with-number" in stderr
 
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
