@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop pushing to `openstack-app-collection`.
 
+### Added
+
+- Restrict cluster names to 10 characters and forbid them to start with a number.
+- Restrict machine pools and deployments to 21 characters (10 for the cluster
+name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
+and forbid them to start with a number.
+
 ### Changed
 
 - Improve/fix cluster label policy tests to also check error message.
