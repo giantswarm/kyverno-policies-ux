@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2023-06-20
 
+- Revert 38: some customer clusters violate the rule that machine deployment names should not start with a number.
+
 ## [0.3.0] - 2023-06-20
 
 ### Removed
