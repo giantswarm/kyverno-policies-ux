@@ -1,5 +1,5 @@
 from pytest_helm_charts.clusters import Cluster
-from pytest_helm_charts.k8s.deployment import wait_for_deployments_to_run
+from pytest_helm_charts.k8s.deployment import wait_for_objects_condition
 import logging
 import pykube
 import pytest
@@ -15,6 +15,8 @@ def fixtures(kube_cluster: Cluster):
     """
     Ensure that all prerequisites for our tests are in place.
     """
+    if kube_cluster.kube_client is None:
+        raise Exception("kube_cluster.kube_client is None")
 
     # Cluster CRD
     LOGGER.info("Create cluster.x-k8s.io CRD")
@@ -29,7 +31,16 @@ def fixtures(kube_cluster: Cluster):
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
     ret = kube_cluster.kubectl("apply --server-side", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
-    wait_for_deployments_to_run(kube_cluster.kube_client, deployment_names=["kyverno"], deployments_namespace="kyverno", timeout_sec=100)
+
+    wait_for_objects_condition(
+        kube_client=kube_cluster.kube_client,
+        obj_type=pykube.Deployment,
+        obj_names=["kyverno"],
+        objs_namespace="kyverno",
+        obj_condition_func=lambda d: int(d.obj["status"].get("readyReplicas", 0)) > 0,
+        timeout_sec=100,
+        missing_ok=False
+    )
     LOGGER.debug(f"Install Kyverno result: {ret}")
 
     # Our policies
