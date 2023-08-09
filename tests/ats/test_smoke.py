@@ -8,6 +8,8 @@ import subprocess
 LOGGER = logging.getLogger(__name__)
 
 SERVICE_PRIORITY_LABEL = "giantswarm.io/service-priority"
+PREVENT_DELETION_LABEL = "giantswarm.io/prevent-deletion"
+
 
 @pytest.mark.smoke
 def test_api_working(fixtures, kube_cluster: Cluster) -> None:
@@ -134,6 +136,45 @@ def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Clus
     assert "restrict-label-value-changes" in stderr
     assert "validate.kyverno.svc-fail" in stderr
 
+
+@pytest.mark.smoke
+def test_cluster_prevent_deletion_label_with_label(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents the deletion of a cluster that has the `giantswarm.io/prevent-deletion` label.
+    """
+
+    # label cluster with prevent-deletion label
+    kube_cluster.kubectl(
+        f"label --overwrite clusters.cluster.x-k8s.io test-cluster {PREVENT_DELETION_LABEL}=true"
+    )
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempt to delete cluster with prevent-deletion label")
+        output = kube_cluster.kubectl(
+            "delete clusters.cluster.x-k8s.io test-cluster"
+        )
+        LOGGER.warn(f"Deleting cluster with prevent-deletion label did not fail, output: {output}")
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+
+    assert "block-resource-deletion-if-has-prevent-deletion-label" in stderr
+    assert "validate.kyverno.svc-fail" in stderr
+
+    # remove prevent-deletion label
+    kube_cluster.kubectl(
+        f"label --overwrite clusters.cluster.x-k8s.io test-cluster {PREVENT_DELETION_LABEL}-"
+    )
+
+
+@pytest.mark.smoke
+def test_cluster_prevent_deletion_label_without_label(fixtures, kube_cluster: Cluster) -> None:
+    LOGGER.info("Attempt to delete cluster without prevent-deletion label")
+    output = kube_cluster.kubectl(
+        "delete clusters.cluster.x-k8s.io test-cluster"
+    )
+    LOGGER.info(f"Deleting cluster without prevent-deletion label succeeded, output: {output}")
+
+    # recreate cluster
+    kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
 
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:

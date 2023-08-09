@@ -49,6 +49,8 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.debug(f"Created cluster service priority policies result: {ret}")
     ret = kube_cluster.kubectl("apply", filename="../../policies/ux/organization-deletion-when-has-clusters.yaml", output_format="json")
     LOGGER.debug(f"Created organization deletion policies result: {ret}")
+    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/resource-deletion-when-has-prevent-deletion-label.yaml", output_format="json")
+    LOGGER.debug(f"Created resource deletion policies result: {ret}")
 
     # Create Organization namespace
     LOGGER.info("Create namespaces named 'org-giantswarm' and 'org-empty'")
