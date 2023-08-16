@@ -20,18 +20,11 @@ spec:
       any:
       - resources:
           kinds: 
-            - Cluster
-            - Machinedeployment
-            - Machinepool
-            - AWSCluster
-            - AWSControlPlane
-            - AWSMachineDeployment
-            - G8sControlPlane
-            - AzureCluster
-            - AzureMachinePool
-            - VSphereCluster
-            - App
-            - Organization
+[[- range .Values.preventDeletionLabelPolicy.resources ]]
+[[- if $.Capabilities.APIVersions.Has . ]]
+            - [[ . ]]
+[[- end ]]
+[[- end ]]
             - Namespace
           selector:
             matchLabels:
