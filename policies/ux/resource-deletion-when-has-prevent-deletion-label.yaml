@@ -20,7 +20,19 @@ spec:
       any:
       - resources:
           kinds: 
-            - "*"
+            - Cluster
+            - Machinedeployment
+            - Machinepool
+            - AWSCluster
+            - AWSControlPlane
+            - AWSMachineDeployment
+            - G8sControlPlane
+            - AzureCluster
+            - AzureMachinePool
+            - VSphereCluster
+            - App
+            - Organization
+            - Namespace
           selector:
             matchLabels:
               giantswarm.io/prevent-deletion: "*"

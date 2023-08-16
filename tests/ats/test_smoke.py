@@ -138,19 +138,21 @@ def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Clus
 
 
 @pytest.mark.smoke
-def test_cluster_prevent_deletion_label_with_label(fixtures, kube_cluster: Cluster) -> None:
+def test_prevent_deletion_with_label(fixtures, kube_cluster: Cluster) -> None:
     """
     Checks whether our policy prevents the deletion of a cluster that has the `giantswarm.io/prevent-deletion` label.
     """
 
-    # label cluster with prevent-deletion label
+    # create namespace
+    kube_cluster.kubectl("create namespace test-namespace")
+    # label namespace
     kube_cluster.kubectl(
-        f"label --overwrite clusters.cluster.x-k8s.io test-cluster {PREVENT_DELETION_LABEL}=true"
+        f"label --overwrite namespace test-namespace {PREVENT_DELETION_LABEL}=true"
     )
     with pytest.raises(subprocess.CalledProcessError) as e:
-        LOGGER.info("Attempt to delete cluster with prevent-deletion label")
+        LOGGER.info("Attempt to delete namespace with prevent-deletion label")
         output = kube_cluster.kubectl(
-            "delete clusters.cluster.x-k8s.io test-cluster"
+            "delete namespace test-namespace"
         )
         LOGGER.warn(f"Deleting cluster with prevent-deletion label did not fail, output: {output}")
     stderr = e.value.stderr
@@ -159,22 +161,25 @@ def test_cluster_prevent_deletion_label_with_label(fixtures, kube_cluster: Clust
     assert "block-resource-deletion-if-has-prevent-deletion-label" in stderr
     assert "validate.kyverno.svc-fail" in stderr
 
-    # remove prevent-deletion label
+    # remove label
     kube_cluster.kubectl(
-        f"label --overwrite clusters.cluster.x-k8s.io test-cluster {PREVENT_DELETION_LABEL}-"
+        f"label --overwrite namespace test-namespace {PREVENT_DELETION_LABEL}-"
     )
+
+    # delete namespace
+    kube_cluster.kubectl("delete namespace test-namespace")
 
 
 @pytest.mark.smoke
-def test_cluster_prevent_deletion_label_without_label(fixtures, kube_cluster: Cluster) -> None:
-    LOGGER.info("Attempt to delete cluster without prevent-deletion label")
-    output = kube_cluster.kubectl(
-        "delete clusters.cluster.x-k8s.io test-cluster"
-    )
-    LOGGER.info(f"Deleting cluster without prevent-deletion label succeeded, output: {output}")
+def test_dont_prevent_deletion_without_label(fixtures, kube_cluster: Cluster) -> None:
+    # create namespace
+    kube_cluster.kubectl("create namespace test-namespace")
 
-    # recreate cluster
-    kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
+    LOGGER.info("Attempt to delete namespace without prevent-deletion label")
+    output = kube_cluster.kubectl(
+        "delete namespace test-namespace"
+    )
+    LOGGER.info(f"Deleting cluster without prevent-deletion label did not fail, output: {output}")
 
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
