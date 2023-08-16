@@ -3,3 +3,4 @@ managementCluster:
 
 provider:
   kind: ""
+  flavor: ""

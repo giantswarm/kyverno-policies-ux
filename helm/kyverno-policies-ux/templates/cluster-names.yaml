@@ -1,4 +1,5 @@
 # THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+{{- if eq .provider.flavor "vintage" }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -41,3 +42,65 @@ spec:
             operator: Equals
             value: true
 
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-machine-pool-names
+  annotations:
+    policies.kyverno.io/title: Restrict names of MachinePools
+    policies.kyverno.io/subject: MachinePools
+    policies.kyverno.io/description: >-
+      MachinePool names are of the form {CLUSTER_NAME}-{MD_NAME},
+      therefore their total length must not exceed 21 (10 for CLUSTER_NAME
+      and 10 for MACHINE_POOL_NAME).
+      In addition they must never start with a number.
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: machine-pool-name-maximum-length
+    match:
+      any:
+      - resources:
+          kinds:
+          - MachinePool
+    validate:
+      message: "machine pool name must not be longer than 21 characters (10 for cluster name, 1 for '-', 10 for user defined named)"
+      deny:
+        conditions:
+          any:
+          - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
+            operator: GreaterThan
+            value: 21
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: machine-deployment-names
+  annotations:
+    policies.kyverno.io/title: Restrict names of MachineDeployments
+    policies.kyverno.io/subject: MachineDeployments
+    policies.kyverno.io/description: >-
+      MachineDeployment names are of the form {CLUSTER_NAME}-{MD_NAME},
+      therefore their total length must not exceed 21 (10 for CLUSTER_NAME
+      and 10 for MACHINE_DEPLOYMENT_NAME).
+      In addition they must never start with a number.
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: machine-deployment-name-maximum-length
+    match:
+      any:
+      - resources:
+          kinds:
+          - MachineDeployment
+    validate:
+      message: "machine deployment name must not be longer than 21 characters (10 for cluster name, 1 for '-', 10 for user defined named)"
+      deny:
+        conditions:
+          any:
+          - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
+            operator: GreaterThan
+            value: 21
+{{- end}}

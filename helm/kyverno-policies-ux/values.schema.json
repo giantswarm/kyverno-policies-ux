@@ -15,6 +15,9 @@
             "properties": {
                 "kind": {
                     "type": "string"
+                },
+                "flavor": {
+                    "type": "string"
                 }
             }
         }
