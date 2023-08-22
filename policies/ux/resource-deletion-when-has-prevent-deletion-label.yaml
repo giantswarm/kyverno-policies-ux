@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-resource-deletion-if-has-prevent-deletion-label
+  annotations:
+    policies.kyverno.io/title: Block resource deletion if the resource has the `giantswarm.io/prevent-deletion` label.
+    policies.kyverno.io/subject: "*"
+    policies.kyverno.io/description: >-
+      We want to block the deletion of resources that have the
+      `giantswarm.io/prevent-deletion` label.
+
+      The `giantswarm.io/prevent-deletion` label, together with this policy, is used as a
+      mechanism to prevent accidental deletion of important resources.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: block-resource-deletion-if-has-prevent-deletion-label
+    match:
+      any:
+      - resources:
+          kinds: 
+[[- range .Values.preventDeletionLabelPolicy.resources ]]
+[[- if $.Capabilities.APIVersions.Has . ]]
+            - [[ . ]]
+[[- end ]]
+[[- end ]]
+            - Namespace
+          selector:
+            matchLabels:
+              giantswarm.io/prevent-deletion: "*"
+    validate:
+      message: "Remove the `giantswarm.io/prevent-deletion` label from this resource before deleting it."
+      deny:
+        conditions:
+        - key: "{{request.operation}}"
+          operator: In
+          value:
+          - DELETE

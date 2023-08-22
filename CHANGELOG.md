@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add policy that blocks deletion of resources with the `giantswarm.io/prevent-deletion` label.
+
+### Changed
+
+- Updates ats, abs and ats python dependencies.
+
 ## [0.3.1] - 2023-06-20
 
 ## [0.3.0] - 2023-06-20

@@ -7,11 +7,12 @@ verify_ssl = true
 pre-commit = "*"
 
 [packages]
-pytest-helm-charts = ">=0.7.0"
-pytest = ">=6.1.2"
-pykube-ng = ">=20.10.0"
+pytest-helm-charts = "==1.1.1"
+pytest = ">=7.4.0"
+pykube-ng = ">=22.0"
 pyyaml = ">=5.4.1"
-pytest-rerunfailures = "*"
+pytest-rerunfailures = ">=12.0"
+exceptiongroup = "*" # indirect - remove this, if it works without it
 
 [requires]
 python_version = "3.9"

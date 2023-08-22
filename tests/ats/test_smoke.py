@@ -8,6 +8,8 @@ import subprocess
 LOGGER = logging.getLogger(__name__)
 
 SERVICE_PRIORITY_LABEL = "giantswarm.io/service-priority"
+PREVENT_DELETION_LABEL = "giantswarm.io/prevent-deletion"
+
 
 @pytest.mark.smoke
 def test_api_working(fixtures, kube_cluster: Cluster) -> None:
@@ -60,8 +62,8 @@ def test_service_priority_cluster_label_valid_edit(fixtures, kube_cluster: Clust
 
 
 @pytest.mark.smoke
-def test_service_priority_cluster_label_invalid_edit(fixtures, capfd, kube_cluster: Cluster) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+def test_service_priority_cluster_label_invalid_edit(fixtures, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         """
         Checks whether our policy to prevent invalid service-priority label
         values is working.
@@ -81,8 +83,8 @@ def test_service_priority_cluster_label_invalid_edit(fixtures, capfd, kube_clust
         )
         LOGGER.warn(f"Setting invalid service-priority label did not fail, output: {output}")
 
-    _, stderr = capfd.readouterr()
-
+    LOGGER.info(f"stdout: {e.value.stdout}, stderr: {e.value.stderr}")
+    stderr = e.value.stderr
     assert SERVICE_PRIORITY_LABEL in stderr
     assert "restrict-label-value-changes" in stderr
     assert "validate.kyverno.svc-fail" in stderr
@@ -97,21 +99,26 @@ def test_service_priority_cluster_label_remove(fixtures, kube_cluster: Cluster) 
 
     # Set valid label value
     LOGGER.info(f"Attempt to set valid {SERVICE_PRIORITY_LABEL} label")
-    cluster = kube_cluster.kubectl(
+    kube_cluster.kubectl(
         f"label --overwrite clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}=highest"
     )
-    LOGGER.info(f"Attempt to set valid service-priority label - result: {cluster}")
 
     # Remove label
-    cluster = kube_cluster.kubectl(
+    kube_cluster.kubectl(
         f"label clusters.cluster.x-k8s.io test-cluster {SERVICE_PRIORITY_LABEL}-"
     )
+
+    cluster = kube_cluster.kubectl(
+        "get clusters.cluster.x-k8s.io test-cluster -o json"
+    )
+    LOGGER.info(f"cluster: {cluster}")
+    LOGGER.info(f"cluster metadata: {cluster['metadata']}")
     assert SERVICE_PRIORITY_LABEL not in cluster["metadata"]["labels"]
 
 
 @pytest.mark.smoke
-def test_service_priority_cluster_label_invalid_set(fixtures, capfd, kube_cluster: Cluster) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+def test_service_priority_cluster_label_invalid_set(fixtures, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         """
         Checks whether our policy to prevent invalid service-priority label
         values is working.
@@ -124,12 +131,55 @@ def test_service_priority_cluster_label_invalid_set(fixtures, capfd, kube_cluste
         )
         LOGGER.warn(f"Setting invalid service-priority label did not fail, output: {output}")
 
-    _, stderr = capfd.readouterr()
-
+    stderr = e.value.stderr
     assert SERVICE_PRIORITY_LABEL in stderr
     assert "restrict-label-value-changes" in stderr
     assert "validate.kyverno.svc-fail" in stderr
 
+
+@pytest.mark.smoke
+def test_prevent_deletion_with_label(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents the deletion of a cluster that has the `giantswarm.io/prevent-deletion` label.
+    """
+
+    # create namespace
+    kube_cluster.kubectl("create namespace test-namespace")
+    # label namespace
+    kube_cluster.kubectl(
+        f"label --overwrite namespace test-namespace {PREVENT_DELETION_LABEL}=true"
+    )
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempt to delete namespace with prevent-deletion label")
+        output = kube_cluster.kubectl(
+            "delete namespace test-namespace"
+        )
+        LOGGER.warn(f"Deleting cluster with prevent-deletion label did not fail, output: {output}")
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+
+    assert "block-resource-deletion-if-has-prevent-deletion-label" in stderr
+    assert "validate.kyverno.svc-fail" in stderr
+
+    # remove label
+    kube_cluster.kubectl(
+        f"label --overwrite namespace test-namespace {PREVENT_DELETION_LABEL}-"
+    )
+
+    # delete namespace
+    kube_cluster.kubectl("delete namespace test-namespace")
+
+
+@pytest.mark.smoke
+def test_dont_prevent_deletion_without_label(fixtures, kube_cluster: Cluster) -> None:
+    # create namespace
+    kube_cluster.kubectl("create namespace test-namespace")
+
+    LOGGER.info("Attempt to delete namespace without prevent-deletion label")
+    output = kube_cluster.kubectl(
+        "delete namespace test-namespace"
+    )
+    LOGGER.info(f"Deleting cluster without prevent-deletion label did not fail, output: {output}")
 
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
