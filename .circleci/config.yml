@@ -2,14 +2,14 @@
 version: 2.1
 
 orbs:
-  architect: giantswarm/architect@4.29.0
+  architect: giantswarm/architect@4.31.0
 
 commands:
   run-ats:
     parameters:
       ats_version:
         type: string
-        default: 0.2.3
+        default: 0.4.1
       chart_archive_prefix:
         type: string
       tests_dir:
@@ -42,7 +42,7 @@ jobs:
     environment:
       KIND_VERSION: v0.17.0
       KUBERNETES_VERSION: v1.24.7
-      DABS_VERSION: v1.0.4
+      DABS_VERSION: v1.1.5
     steps:
       - checkout
       - run:

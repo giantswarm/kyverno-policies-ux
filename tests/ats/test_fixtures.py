@@ -1,5 +1,14 @@
+from pykube.config import os
 from pytest_helm_charts.clusters import Cluster
-from pytest_helm_charts.k8s.deployment import wait_for_deployments_to_run
+from pytest_helm_charts.k8s.deployment import wait_for_objects_condition
+from pytest_helm_charts.giantswarm_app_platform.app import (
+    ConfiguredApp,
+    create_app,
+    wait_for_apps_to_run,
+    AppCR,
+    delete_app,
+    wait_for_app_to_be_deleted,
+)
 import logging
 import pykube
 import pytest
@@ -17,6 +26,8 @@ def fixtures(kube_cluster: Cluster):
     """
     Ensure that all prerequisites for our tests are in place.
     """
+    if kube_cluster.kube_client is None:
+        raise Exception("kube_cluster.kube_client is None")
 
     # Cluster CRD
     LOGGER.info("Create cluster.x-k8s.io CRD")
@@ -34,24 +45,46 @@ def fixtures(kube_cluster: Cluster):
     ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/main/config/crd/security.giantswarm.io_organizations.yaml", output_format="json")
     LOGGER.debug(f"Created Organization CRD: {ret}")
 
+    # CertConfig CRD
+    LOGGER.info("Create CertConfig CRD")
+    ret = kube_cluster.kubectl("apply", filename="cert-config-crd.yaml", output_format="json")
+    LOGGER.debug(f"Created CertConfig CRD: {ret}")
+
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
     ret = kube_cluster.kubectl("apply --server-side", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
-    wait_for_deployments_to_run(kube_cluster.kube_client, deployment_names=["kyverno"], deployments_namespace="kyverno", timeout_sec=100)
+
+    wait_for_objects_condition(
+        kube_client=kube_cluster.kube_client,
+        obj_type=pykube.Deployment,
+        obj_names=["kyverno"],
+        objs_namespace="kyverno",
+        obj_condition_func=lambda d: int(d.obj["status"].get("readyReplicas", 0)) > 0,
+        timeout_sec=100,
+        missing_ok=False
+    )
     LOGGER.debug(f"Install Kyverno result: {ret}")
 
-    # Our policies
-    LOGGER.info("Deploy Kyverno policies for the service-priority cluster label")
-    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/clusters-label-service-priority.yaml", output_format="json")
-    LOGGER.debug(f"Created cluster service priority policies result: {ret}")
-    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/organization-deletion-when-has-clusters.yaml", output_format="json")
-    LOGGER.debug(f"Created organization deletion policies result: {ret}")
-    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/cluster-names.yaml", output_format="json")
-    LOGGER.debug(f"Created cluster names policies result: {ret}")
-    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/machine-deployment-names.yaml", output_format="json")
-    LOGGER.debug(f"Created machine deployment names policies result: {ret}")
-    ret = kube_cluster.kubectl("apply", filename="../../policies/ux/machine-pool-names.yaml", output_format="json")
-    LOGGER.debug(f"Created machine pool names policies result: {ret}")
+    app_name = "kyverno-policies-ux"
+    namespace = "default"
+    # get version from env `ATS_CHART_VERSION`
+    version = os.environ.get("ATS_CHART_VERSION")
+    if version is None:
+        raise Exception("ATS_CHART_VERSION is not set")
+
+    LOGGER.info(f"Deploy app {app_name} version {version}")
+    create_app(
+        kube_client=kube_cluster.kube_client,
+        app_name=app_name,
+        app_version=version,
+        catalog_name="chartmuseum",
+        catalog_namespace="default",
+        namespace=namespace,
+        deployment_namespace=namespace,
+    )
+    wait_for_apps_to_run(kube_cluster.kube_client, [app_name], namespace, 1800)
+    LOGGER.debug(f"Deployed app {app_name}")
+        
 
     # Create Organization namespace
     LOGGER.info("Create namespaces named 'org-giantswarm' and 'org-empty'")
