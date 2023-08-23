@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2023-08-22
+## [0.5.0] - 2023-08-23
 
 ### Added
 
 - Add ConfigMap and Secret as default targeted resource for `giantswarm.io/prevent-deletion` label.
+
+## [0.4.0] - 2023-08-22
 
 ### Added
 
@@ -84,7 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.2.3...v0.3.0
