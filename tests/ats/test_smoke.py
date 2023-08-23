@@ -1,3 +1,4 @@
+import time
 from pytest_helm_charts.clusters import Cluster
 from test_fixtures import fixtures, TEST_CLUSTER_NAME
 import logging
@@ -111,7 +112,7 @@ def test_service_priority_cluster_label_remove(fixtures, kube_cluster: Cluster) 
     )
 
     cluster = kube_cluster.kubectl(
-        "get clusters.cluster.x-k8s.io test-cluster -o json"
+        f"get clusters.cluster.x-k8s.io {TEST_CLUSTER_NAME} -o yaml"
     )
     LOGGER.info(f"cluster: {cluster}")
     LOGGER.info(f"cluster metadata: {cluster['metadata']}")
@@ -173,8 +174,8 @@ def test_valid_machinedeployment_name(fixtures, kube_cluster: Cluster) -> None:
 
 
 @pytest.mark.smoke
-def test_invalid_cluster_name(fixtures, capfd, kube_cluster: Cluster) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+def test_invalid_cluster_name(fixtures, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         """
         Checks whether our policy prevents creating Cluster resources with
         invalid names.
@@ -189,15 +190,15 @@ def test_invalid_cluster_name(fixtures, capfd, kube_cluster: Cluster) -> None:
         ),
         LOGGER.warn(f"Creating cluster did not fail as expected, result: {output}")
 
-    _, stderr = capfd.readouterr()
+    stderr = e.value.stderr
     assert "validate.kyverno.svc-fail" in stderr
     assert "cluster-name-maximum-length" in stderr
     assert "cluster-name-does-not-start-with-number" in stderr
 
 
 @pytest.mark.smoke
-def test_invalid_machinepool_name(fixtures, capfd, kube_cluster: Cluster) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+def test_invalid_machinepool_name(fixtures, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         """
         Checks whether our policy prevents creating MachinePool resources with
         invalid names.
@@ -207,14 +208,14 @@ def test_invalid_machinepool_name(fixtures, capfd, kube_cluster: Cluster) -> Non
         output = kube_cluster.kubectl("apply", filename="invalid-machinepools.yaml", output_format="json"),
         LOGGER.warn(f"Creating machinepool did not fail as expected, result: {output}")
 
-    _, stderr = capfd.readouterr()
+    stderr = e.value.stderr
     assert "validate.kyverno.svc-fail" in stderr
     assert "machine-pool-name-maximum-length" in stderr
 
 
 @pytest.mark.smoke
-def test_invalid_machinedeployment_name(fixtures, capfd, kube_cluster: Cluster) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+def test_invalid_machinedeployment_name(fixtures, kube_cluster: Cluster) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         """
         Checks whether our policy prevents creating MachineDeployment resources with
         invalid names.
@@ -224,7 +225,7 @@ def test_invalid_machinedeployment_name(fixtures, capfd, kube_cluster: Cluster) 
         output = kube_cluster.kubectl("apply", filename="invalid-machinedeployments.yaml", output_format="json"),
         LOGGER.warn(f"Creating machinedeployment did not fail as expected, result: {output}")
 
-    _, stderr = capfd.readouterr()
+    stderr = e.value.stderr
     assert "machine-deployment-name-maximum-length" in stderr
 
 def test_prevent_deletion_with_label(fixtures, kube_cluster: Cluster) -> None:

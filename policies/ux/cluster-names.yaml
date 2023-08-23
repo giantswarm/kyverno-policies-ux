@@ -1,4 +1,4 @@
-[[- if eq .Values.provider.flavor "vintage" ]]
+[[- if eq .Values.provider.flavor "capi" ]]
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

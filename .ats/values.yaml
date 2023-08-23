@@ -1,0 +1,23 @@
+managementCluster:
+  name: ""
+
+provider:
+  kind: ""
+  flavor: ""
+
+preventDeletionLabelPolicy:
+  resources:
+    - cluster.x-k8s.io/v1beta1/Cluster
+    - cluster.x-k8s.io/v1beta1/MachineDeployment
+    - cluster.x-k8s.io/v1beta1/MachinePool
+    - infrastructure.giantswarm.io/v1alpha3/AWSCluster
+    - infrastructure.giantswarm.io/v1alpha3/AWSControlPlane
+    - infrastructure.giantswarm.io/v1alpha3/AWSMachineDeployment
+    - infrastructure.giantswarm.io/v1alpha3/G8sControlPlane
+    - infrastructure.cluster.x-k8s.io/v1beta1/AzureMachinePool
+    - infrastructure.cluster.x-k8s.io/v1beta1/VSphereCluster
+    - application.giantswarm.io/v1alpha1/App
+    - security.giantswarm.io/v1alpha1/Organization
+    - v1/Namespace
+    - v1/Secret
+    - v1/ConfigMap
