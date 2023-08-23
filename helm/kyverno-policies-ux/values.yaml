@@ -17,3 +17,6 @@ preventDeletionLabelPolicy:
     - infrastructure.cluster.x-k8s.io/v1beta1/VSphereCluster
     - application.giantswarm.io/v1alpha1/App
     - security.giantswarm.io/v1alpha1/Organization
+    - v1/Namespace
+    - v1/Secret
+    - v1/ConfigMap
