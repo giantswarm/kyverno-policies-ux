@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add ConfigMap and Secret as default targeted resource for `giantswarm.io/prevent-deletion` label.
+
+### Added
+
 - Add policy that blocks deletion of resources with the `giantswarm.io/prevent-deletion` label.
 
 ### Changed
