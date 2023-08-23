@@ -25,7 +25,6 @@ spec:
             - [[ . ]]
 [[- end ]]
 [[- end ]]
-            - Namespace
           selector:
             matchLabels:
               giantswarm.io/prevent-deletion: "*"
