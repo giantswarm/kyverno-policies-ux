@@ -21,9 +21,12 @@ spec:
       - resources:
           kinds: 
 [[- range .Values.preventDeletionLabelPolicy.resources ]]
-[[- if $.Capabilities.APIVersions.Has . ]]
-            - [[ . ]]
-[[- end ]]
+  [[- $resource := . -]]
+  [[- range $.Capabilities.APIVersions ]]
+    [[- if eq (last (splitList "/" .)) $resource ]]
+          - [[ $resource ]]
+    [[- end ]]
+  [[- end ]]
 [[- end ]]
           selector:
             matchLabels:
