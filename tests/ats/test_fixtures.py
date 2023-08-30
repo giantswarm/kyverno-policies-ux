@@ -70,13 +70,8 @@ def fixtures(kube_cluster: Cluster):
         raise Exception("ATS_CHART_VERSION is not set")
 
 
-    # relative to tests/ats
-    test_values_path = "values.yaml"
-    # LOGGER.info(f"Loading test values from {test_values_path}")
-    # # print current dir to debug
-    # LOGGER.info("HERE comes the dir tree")
-    # for file in os.listdir("."):
-    #     LOGGER.info(file)
+    test_values_path = "test-values.yaml"
+    LOGGER.info(f"Reading test values from {test_values_path}")
     with open(test_values_path) as stream:
         try:
             test_values = yaml.safe_load(stream)
