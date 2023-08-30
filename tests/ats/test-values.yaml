@@ -3,7 +3,7 @@ managementCluster:
 
 provider:
   kind: ""
-  flavor: ""
+  flavor: capi
 
 preventDeletionLabelPolicy:
   resources:

@@ -5,5 +5,3 @@ app-tests-skip-app-deploy: true
 
 skip-steps: [functional, upgrade]
 smoke-tests-cluster-type: kind
-
-app-tests-app-config-file: .ats/values.yaml

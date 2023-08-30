@@ -145,7 +145,7 @@ def test_valid_cluster_name(fixtures, kube_cluster: Cluster) -> None:
     LOGGER.info("Attempt to create cluster with valid name")
     output = kube_cluster.kubectl(
         "apply",
-        filename="valid-cluster.yaml",
+        filename="manifests/valid-cluster.yaml",
         output_format="json"
     ),
     LOGGER.info(f"Created cluster without error, result: {output}")
@@ -156,7 +156,7 @@ def test_valid_machinepool_name(fixtures, kube_cluster: Cluster) -> None:
     LOGGER.info("Attempt to create machinepool with valid name")
     output = kube_cluster.kubectl(
         "apply",
-        filename="valid-machinepool.yaml",
+        filename="manifests/valid-machinepool.yaml",
         output_format="json"
     ),
     LOGGER.info(f"Created machinepool without error, result: {output}")
@@ -167,7 +167,7 @@ def test_valid_machinedeployment_name(fixtures, kube_cluster: Cluster) -> None:
     LOGGER.info("Attempt to create machinedeployment with valid name")
     output = kube_cluster.kubectl(
         "apply",
-        filename="valid-machinedeployment.yaml",
+        filename="manifests/valid-machinedeployment.yaml",
         output_format="json"
     ),
     LOGGER.info(f"Created machinedeployment without error, result: {output}")
@@ -185,7 +185,7 @@ def test_invalid_cluster_name(fixtures, kube_cluster: Cluster) -> None:
         LOGGER.info("Attempt to create cluster with invalid name")
         output = kube_cluster.kubectl(
             "apply",
-            filename="invalid-clusters.yaml",
+            filename="manifests/invalid-clusters.yaml",
             output_format="json"
         ),
         LOGGER.warn(f"Creating cluster did not fail as expected, result: {output}")
@@ -205,7 +205,7 @@ def test_invalid_machinepool_name(fixtures, kube_cluster: Cluster) -> None:
         """
 
         LOGGER.info("Attempt to create machinepool with invalid name")
-        output = kube_cluster.kubectl("apply", filename="invalid-machinepools.yaml", output_format="json"),
+        output = kube_cluster.kubectl("apply", filename="manifests/invalid-machinepools.yaml", output_format="json"),
         LOGGER.warn(f"Creating machinepool did not fail as expected, result: {output}")
 
     stderr = e.value.stderr
@@ -222,7 +222,7 @@ def test_invalid_machinedeployment_name(fixtures, kube_cluster: Cluster) -> None
         """
 
         LOGGER.info("Attempt to create machinedeployment with invalid name")
-        output = kube_cluster.kubectl("apply", filename="invalid-machinedeployments.yaml", output_format="json"),
+        output = kube_cluster.kubectl("apply", filename="manifests/invalid-machinedeployments.yaml", output_format="json"),
         LOGGER.warn(f"Creating machinedeployment did not fail as expected, result: {output}")
 
     stderr = e.value.stderr

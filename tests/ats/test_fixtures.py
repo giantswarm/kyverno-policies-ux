@@ -2,17 +2,14 @@ from pykube.config import os
 from pytest_helm_charts.clusters import Cluster
 from pytest_helm_charts.k8s.deployment import wait_for_objects_condition
 from pytest_helm_charts.giantswarm_app_platform.app import (
-    ConfiguredApp,
     create_app,
     wait_for_apps_to_run,
-    AppCR,
-    delete_app,
-    wait_for_app_to_be_deleted,
 )
 import logging
 import pykube
 import pytest
 import time
+import yaml
 
 
 TEST_CLUSTER_NAME = "test"
@@ -31,13 +28,13 @@ def fixtures(kube_cluster: Cluster):
 
     # Cluster CRD
     LOGGER.info("Create cluster.x-k8s.io CRD")
-    ret = kube_cluster.kubectl("apply", filename="cluster-crd.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/crds/cluster-crd.yaml", output_format="json")
     LOGGER.debug("Created cluster CRD")
     LOGGER.info("Create machinepools.cluster.x-k8s.io CRD")
-    ret = kube_cluster.kubectl("apply", filename="machinepool-crd.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/crds/machinepool-crd.yaml", output_format="json")
     LOGGER.debug("Created machinepool CRD")
     LOGGER.info("Create machinedeployments.cluster.x-k8s.io CRD")
-    ret = kube_cluster.kubectl("apply", filename="machinedeployment-crd.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/crds/machinedeployment-crd.yaml", output_format="json")
     LOGGER.debug("Created machinedeployment CRD")
 
     # Organization CRD
@@ -47,7 +44,7 @@ def fixtures(kube_cluster: Cluster):
 
     # CertConfig CRD
     LOGGER.info("Create CertConfig CRD")
-    ret = kube_cluster.kubectl("apply", filename="cert-config-crd.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/crds/cert-config-crd.yaml", output_format="json")
     LOGGER.debug(f"Created CertConfig CRD: {ret}")
 
     # Kyverno
@@ -72,6 +69,20 @@ def fixtures(kube_cluster: Cluster):
     if version is None:
         raise Exception("ATS_CHART_VERSION is not set")
 
+
+    # relative to tests/ats
+    test_values_path = "values.yaml"
+    # LOGGER.info(f"Loading test values from {test_values_path}")
+    # # print current dir to debug
+    # LOGGER.info("HERE comes the dir tree")
+    # for file in os.listdir("."):
+    #     LOGGER.info(file)
+    with open(test_values_path) as stream:
+        try:
+            test_values = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            raise Exception(f"Error loading test values from {test_values_path}: {exc}")
+
     LOGGER.info(f"Deploy app {app_name} version {version}")
     create_app(
         kube_client=kube_cluster.kube_client,
@@ -81,6 +92,7 @@ def fixtures(kube_cluster: Cluster):
         catalog_namespace="default",
         namespace=namespace,
         deployment_namespace=namespace,
+        config_values=test_values,
     )
     wait_for_apps_to_run(kube_cluster.kube_client, [app_name], namespace, 1800)
     LOGGER.debug(f"Deployed app {app_name}")
@@ -88,9 +100,9 @@ def fixtures(kube_cluster: Cluster):
 
     # Create Organization namespace
     LOGGER.info("Create namespaces named 'org-giantswarm' and 'org-empty'")
-    ret = kube_cluster.kubectl("apply", filename="test-organization.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/test-organization.yaml", output_format="json")
     LOGGER.debug(f"Created giantswarm organization and its namespace: {ret}")
-    ret = kube_cluster.kubectl("apply", filename="test-empty-organization.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/test-empty-organization.yaml", output_format="json")
     LOGGER.debug(f"Created empty organization and its namespace: {ret}")
 
     # This block is commented because test fail but I can't figure out why. If someone with Python experience could help, please let me know.
@@ -102,7 +114,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Test cluster CR
     LOGGER.info(f"Create cluster.x-k8s.io/v1beta1 named '{TEST_CLUSTER_NAME}'")
-    ret = kube_cluster.kubectl("apply", filename="test-cluster.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="manifests/test-cluster.yaml", output_format="json")
     LOGGER.debug(f"Created cluster result: {ret}")
 
     time.sleep(5)
