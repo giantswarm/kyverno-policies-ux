@@ -6,5 +6,5 @@ home: https://github.com/giantswarm/kyverno-policies-ux
 icon: https://s.giantswarm.io/app-icons/kyverno/1/light.svg
 annotations:
   application.giantswarm.io/team: "rainbow"
-  config.giantswarm.io/version: pass-provider-flavor-to-kyverno-policies-ux
+  config.giantswarm.io/version: 1.x.x
 version: [[ .Version ]]
