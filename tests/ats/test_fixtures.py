@@ -52,7 +52,7 @@ def fixtures(kube_cluster: Cluster):
         obj_names=["kyverno"],
         objs_namespace="kyverno",
         obj_condition_func=lambda d: int(d.obj["status"].get("readyReplicas", 0)) > 0,
-        timeout_sec=100,
+        timeout_sec=180,
         missing_ok=False
     )
     LOGGER.debug(f"Install Kyverno result: {ret}")
