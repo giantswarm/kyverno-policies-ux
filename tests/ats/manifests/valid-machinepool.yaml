@@ -1,0 +1,16 @@
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachinePool
+metadata:
+  name: "pool"
+  namespace: default
+spec:
+  clusterName: test
+  template:
+    metadata:
+      labels: {}
+    spec:
+      clusterName: test
+      bootstrap:
+        dataSecretName: test
+      infrastructureRef: {}

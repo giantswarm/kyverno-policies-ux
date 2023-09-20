@@ -3,6 +3,7 @@ managementCluster:
 
 provider:
   kind: ""
+  flavor: ""
 
 preventDeletionLabelPolicy:
   resources:
