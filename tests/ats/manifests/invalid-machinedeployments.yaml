@@ -1,8 +1,8 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  # forbidden: longer than 21 characters
-  name: "0123456789-0123456789a"
+  # forbidden: longer than 31 characters
+  name: "0123456789-0123456789-0123456789a"
   namespace: default
 spec:
   clusterName: test

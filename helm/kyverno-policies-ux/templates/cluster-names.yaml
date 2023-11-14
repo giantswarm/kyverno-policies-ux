@@ -8,7 +8,7 @@ metadata:
     policies.kyverno.io/title: Restrict names of Clusters
     policies.kyverno.io/subject: Clusters
     policies.kyverno.io/description: >-
-      Cluster names must not be longer than 10 characters and never
+      Cluster names must not be longer than 20 characters and never
       start with a number.
 spec:
   validationFailureAction: Enforce
@@ -20,13 +20,13 @@ spec:
           kinds:
           - Cluster
     validate:
-      message: "cluster name must be no longer than 10 characters"
+      message: "cluster name must be no longer than 20 characters"
       deny:
         conditions:
           any:
           - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
             operator: GreaterThan
-            value: 10
+            value: 20
   - name: cluster-name-does-not-start-with-number
     match:
       any:
@@ -52,7 +52,7 @@ metadata:
     policies.kyverno.io/subject: MachinePools
     policies.kyverno.io/description: >-
       MachinePool names are of the form {CLUSTER_NAME}-{MD_NAME},
-      therefore their total length must not exceed 21 (10 for CLUSTER_NAME
+      therefore their total length must not exceed 31 (20 for CLUSTER_NAME
       and 10 for MACHINE_POOL_NAME).
       In addition they must never start with a number.
 spec:
@@ -65,13 +65,13 @@ spec:
           kinds:
           - MachinePool
     validate:
-      message: "machine pool name must not be longer than 21 characters (10 for cluster name, 1 for '-', 10 for user defined named)"
+      message: "machine pool name must not be longer than 31 characters (20 for cluster name, 1 for '-', 10 for user defined named)"
       deny:
         conditions:
           any:
           - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
             operator: GreaterThan
-            value: 21
+            value: 31
 
 ---
 apiVersion: kyverno.io/v1
@@ -83,7 +83,7 @@ metadata:
     policies.kyverno.io/subject: MachineDeployments
     policies.kyverno.io/description: >-
       MachineDeployment names are of the form {CLUSTER_NAME}-{MD_NAME},
-      therefore their total length must not exceed 21 (10 for CLUSTER_NAME
+      therefore their total length must not exceed 31 (20 for CLUSTER_NAME
       and 10 for MACHINE_DEPLOYMENT_NAME).
       In addition they must never start with a number.
 spec:
@@ -96,11 +96,11 @@ spec:
           kinds:
           - MachineDeployment
     validate:
-      message: "machine deployment name must not be longer than 21 characters (10 for cluster name, 1 for '-', 10 for user defined named)"
+      message: "machine deployment name must not be longer than 31 characters (20 for cluster name, 1 for '-', 10 for user defined named)"
       deny:
         conditions:
           any:
           - key: "{{ `{{` }} length('{{ `{{` }}request.object.metadata.name{{ `}}` }}') {{ `}}` }}"
             operator: GreaterThan
-            value: 21
+            value: 31
 {{- end}}
