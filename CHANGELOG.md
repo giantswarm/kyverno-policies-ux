@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Increase the cluster name length to 20 characters
-- Increase the machine pool name size to 31 characters
-- Increase the machine deployment name size to 31 characters
+- Increase the machine pool name length to 31 characters
+- Increase the machine deployment name length to 31 characters
 
 ## [0.7.0] - 2023-09-27
 
