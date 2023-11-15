@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2023-11-15
+
 ### Changed
 
 - Increase the cluster name length to 20 characters
-- Increase the machine pool name size to 31 characters
-- Increase the machine deployment name size to 31 characters
+- Increase the machine pool name length to 31 characters
+- Increase the machine deployment name length to 31 characters
 
 ## [0.7.0] - 2023-09-27
 
@@ -113,7 +115,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.4.0...v0.5.0
