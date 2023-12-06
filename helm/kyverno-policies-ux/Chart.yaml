@@ -5,6 +5,6 @@ description: Giant Swarm policies supporting user experience.
 home: https://github.com/giantswarm/kyverno-policies-ux
 icon: https://s.giantswarm.io/app-icons/kyverno/1/light.svg
 annotations:
-  application.giantswarm.io/team: "rainbow"
+  application.giantswarm.io/team: "honeybadger"
   config.giantswarm.io/version: 1.x.x
 version: [[ .Version ]]
