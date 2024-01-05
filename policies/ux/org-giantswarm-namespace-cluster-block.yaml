@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-all-clusters-org-giantswarm
+  annotations:
+    policies.kyverno.io/title: Block All Clusters in org-giantswarm
+    policies.kyverno.io/subject: WorkloadClusters
+    policies.kyverno.io/description: >-
+      This policy blocks the creation of all Workload Clusters in the org-giantswarm namespace.
+spec:
+  validationFailureAction: enforce
+  rules:
+    - name: block-cluster-creation
+      match:
+        resources:
+          kinds:
+            - Cluster
+          namespaces:
+            - org-giantswarm
+      validate:
+        message: "Creation of Clusters in org-giantswarm namespace is not allowed."
+        deny: {}
