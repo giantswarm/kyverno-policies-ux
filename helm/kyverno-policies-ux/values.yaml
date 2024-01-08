@@ -21,3 +21,5 @@ preventDeletionLabelPolicy:
     - Namespace
     - Secret
     - ConfigMap
+    - VCDCluster
+    - KubeadmControlPlane
