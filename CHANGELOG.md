@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `VCDCluster` and `KubeadmControlPlane` resources as acceptable deletion prevention targets.
+
 ### Fixed
 
 - Fix team ownership
