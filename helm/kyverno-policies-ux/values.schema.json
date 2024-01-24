@@ -10,13 +10,24 @@
                 }
             }
         },
+        "preventDeletionLabelPolicy": {
+            "type": "object",
+            "properties": {
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "provider": {
             "type": "object",
             "properties": {
-                "kind": {
+                "flavor": {
                     "type": "string"
                 },
-                "flavor": {
+                "kind": {
                     "type": "string"
                 }
             }
