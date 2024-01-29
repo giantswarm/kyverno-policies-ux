@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2024-01-29
+
+### Changed
+
+- Update values schema
+
 ### Added
 
 - Add `VCDCluster` and `KubeadmControlPlane` resources as acceptable deletion prevention targets.
 
 ### Fixed
 
+- Move pss values under the global property
 - Fix team ownership
 
 ## [0.7.1] - 2023-11-15
@@ -123,7 +130,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.5.0...v0.6.0
