@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update values schema
+
 ### Added
 
 - Add `VCDCluster` and `KubeadmControlPlane` resources as acceptable deletion prevention targets.
 
 ### Fixed
 
+- Move pss values under the global property
 - Fix team ownership
 
 ## [0.7.1] - 2023-11-15
