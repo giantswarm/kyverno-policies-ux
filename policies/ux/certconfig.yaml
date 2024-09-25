@@ -10,7 +10,7 @@ metadata:
       be deleted on performing a login, this policy blocks that
       action while still allowing the single delete.
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: Enforce
   background: false
   rules:
   - name: block-bulk-certconfigs-delete

@@ -17,7 +17,7 @@ spec:
       any:
       - resources:
           kinds:
-          - Cluster
+          - cluster.x-k8s.io/v1beta1/Cluster
     validate:
       message: "cluster name must be no longer than 20 characters"
       deny:
@@ -31,7 +31,7 @@ spec:
       any:
       - resources:
           kinds:
-          - Cluster
+          - cluster.x-k8s.io/v1beta1/Cluster
     validate:
       message: "cluster name must not start with a number"
       deny:
