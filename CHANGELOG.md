@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2024-09-25
+
 - `cluster-names` now targets Cluster by GVK
 - Use `Enforce` validationFailureAction.
 
@@ -133,7 +135,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.6.0...v0.7.0
