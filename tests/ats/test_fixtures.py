@@ -16,7 +16,7 @@ TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.12.0"
+KYVERNO_VERSION = "v1.12.6"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):
@@ -54,7 +54,7 @@ def fixtures(kube_cluster: Cluster):
     wait_for_objects_condition(
         kube_client=kube_cluster.kube_client,
         obj_type=pykube.Deployment,
-        obj_names=["kyverno"],
+        obj_names=["kyverno-admission-controller"],
         objs_namespace="kyverno",
         obj_condition_func=lambda d: int(d.obj["status"].get("readyReplicas", 0)) > 0,
         timeout_sec=180,
