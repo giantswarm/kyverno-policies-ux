@@ -16,7 +16,7 @@ TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.9.0"
+KYVERNO_VERSION = "v1.12.0"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):
@@ -39,7 +39,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Organization CRD
     LOGGER.info("Create Organization CRD")
-    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/main/config/crd/security.giantswarm.io_organizations.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/refs/heads/main/config/crd/bases/security.giantswarm.io_organizations.yaml", output_format="json")
     LOGGER.debug(f"Created Organization CRD: {ret}")
 
     # CertConfig CRD
