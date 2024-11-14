@@ -4,8 +4,8 @@ SHELL:=/usr/bin/env bash
 KIND_CLUSTER_NAME ?= kyverno-cluster
 
 # If not already set through env
-KUBERNETES_VERSION ?= v1.24.7
-KYVERNO_VERSION ?= v1.9.0
+KUBERNETES_VERSION ?= v1.29.10
+KYVERNO_VERSION ?= v1.12.6
 
 ##@ Generate
 
