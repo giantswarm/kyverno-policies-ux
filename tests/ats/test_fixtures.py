@@ -16,7 +16,7 @@ TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.9.0"
+KYVERNO_VERSION = "v1.12.6"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):
@@ -39,7 +39,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Organization CRD
     LOGGER.info("Create Organization CRD")
-    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/main/config/crd/security.giantswarm.io_organizations.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/refs/heads/main/config/crd/bases/security.giantswarm.io_organizations.yaml", output_format="json")
     LOGGER.debug(f"Created Organization CRD: {ret}")
 
     # CertConfig CRD
@@ -49,17 +49,18 @@ def fixtures(kube_cluster: Cluster):
 
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
-    ret = kube_cluster.kubectl("apply --server-side", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
+    ret = kube_cluster.kubectl("apply --server-side --force-conflicts", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
 
     wait_for_objects_condition(
         kube_client=kube_cluster.kube_client,
         obj_type=pykube.Deployment,
-        obj_names=["kyverno"],
+        obj_names=["kyverno-admission-controller"],
         objs_namespace="kyverno",
         obj_condition_func=lambda d: int(d.obj["status"].get("readyReplicas", 0)) > 0,
         timeout_sec=180,
         missing_ok=False
     )
+    
     LOGGER.debug(f"Install Kyverno result: {ret}")
 
     app_name = "kyverno-policies-ux"
