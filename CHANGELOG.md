@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Apply `CertConfig` policy just on vintage, since that CRD is not in use in CAPI anymore.
+
 ## [0.7.3] - 2024-09-25
 
 - `cluster-names` now targets Cluster by GVK
