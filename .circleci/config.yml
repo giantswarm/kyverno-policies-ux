@@ -52,7 +52,7 @@ jobs:
     - run:
         name: Download kubectl
         command: |
-          curl -sLO https://storage.googleapis.com/kubernetes-release/release/$KUBERNETES_VERSION/bin/linux/amd64/kubectl && chmod +x kubectl  && sudo mv kubectl /usr/bin
+          curl -sLO https://dl.k8s.io/release/$KUBERNETES_VERSION/bin/linux/amd64/kubectl && chmod +x kubectl  && sudo mv kubectl /usr/bin
     - run:
         name: Download dabs.sh
         command: |
