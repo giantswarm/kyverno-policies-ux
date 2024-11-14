@@ -49,7 +49,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Kyverno
     LOGGER.info(f"Install Kyverno {KYVERNO_VERSION}")
-    ret = kube_cluster.kubectl("apply --server-side", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
+    ret = kube_cluster.kubectl("apply --server-side --force-conflicts", filename=f"https://github.com/kyverno/kyverno/releases/download/{KYVERNO_VERSION}/install.yaml", output_format="json" )
 
     wait_for_objects_condition(
         kube_client=kube_cluster.kube_client,
@@ -60,6 +60,7 @@ def fixtures(kube_cluster: Cluster):
         timeout_sec=180,
         missing_ok=False
     )
+    
     LOGGER.debug(f"Install Kyverno result: {ret}")
 
     app_name = "kyverno-policies-ux"
