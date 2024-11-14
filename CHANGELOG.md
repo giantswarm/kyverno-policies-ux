@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2024-11-14
+
 ### Changed
 
 - Apply `CertConfig` policy just on vintage, since that CRD is not in use in CAPI anymore.
@@ -139,7 +141,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.0...v0.7.1
