@@ -7,19 +7,20 @@ provider:
 
 preventDeletionLabelPolicy:
   resources:
-    - Cluster
-    - MachineDeployment
-    - MachinePool
+    - App
     - AWSCluster
     - AWSControlPlane
     - AWSMachineDeployment
-    - G8sControlPlane
+    - AzureCluster
     - AzureMachinePool
-    - VSphereCluster
-    - App
-    - Organization
-    - Namespace
-    - Secret
+    - Cluster
     - ConfigMap
-    - VCDCluster
+    - G8sControlPlane
     - KubeadmControlPlane
+    - MachineDeployment
+    - MachinePool
+    - Namespace
+    - Organization
+    - Secret
+    - VCDCluster
+    - VSphereCluster

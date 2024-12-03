@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `AzureCluster` to list of objects protected by the deletion prevention label
+
 ## [0.7.4] - 2024-11-14
 
 ### Changed
