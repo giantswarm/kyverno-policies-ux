@@ -198,11 +198,11 @@ workflows:
           tags:
             only: /^v.*/
     - architect/push-to-app-collection:
-        name: push-kyverno-policies-ux-to-gcp-app-collection
+        name: push-kyverno-policies-ux-to-proxmox-app-collection
         context: architect
         app_name: kyverno-policies-ux
         app_namespace: giantswarm
-        app_collection_repo: gcp-app-collection
+        app_collection_repo: proxmox-app-collection
         requires:
         - push-kyverno-policies-ux-to-catalog
         filters:
