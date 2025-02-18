@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use `Enforce` instead of `enforce` as ValidationFailureAction.
+
 ### Added
 
 - Add `AzureCluster` to list of objects protected by the deletion prevention label
