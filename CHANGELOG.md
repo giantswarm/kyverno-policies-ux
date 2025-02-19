@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-02-19
+
 ### Changed
 
 - Use `Enforce` instead of `enforce` as ValidationFailureAction.
@@ -149,7 +151,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.1...v0.7.2
