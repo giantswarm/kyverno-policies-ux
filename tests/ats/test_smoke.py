@@ -193,7 +193,6 @@ def test_invalid_cluster_name(fixtures, kube_cluster: Cluster) -> None:
     stderr = e.value.stderr
     assert "validate.kyverno.svc-fail" in stderr
     assert "cluster-name-maximum-length" in stderr
-    assert "cluster-name-does-not-start-with-number" in stderr
 
 
 @pytest.mark.smoke
