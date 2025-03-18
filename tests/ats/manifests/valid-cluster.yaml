@@ -5,3 +5,10 @@ metadata:
   name: "cluster"
   namespace: default
 spec: {}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: "0cluster"
+  namespace: default
+spec: {}
