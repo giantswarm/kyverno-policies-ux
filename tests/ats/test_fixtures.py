@@ -39,7 +39,7 @@ def fixtures(kube_cluster: Cluster):
 
     # Release CRD
     LOGGER.info("Create releases.release.giantswarm.io CRD")
-    ret = kube_cluster.kubectl("apply", filename="manifests/crds/release-crd.yaml", output_format="json")
+    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/release-operator/refs/heads/master/config/crd/release.giantswarm.io_releases.yaml", output_format="json")
     LOGGER.debug("Created release CRD")
 
     # Organization CRD
