@@ -270,6 +270,411 @@ def test_dont_prevent_deletion_without_label(fixtures, kube_cluster: Cluster) ->
     )
     LOGGER.info(f"Deleting cluster without prevent-deletion label did not fail, output: {output}")
 
+@pytest.mark.smoke
+def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents deletion of a Release that is still in use by clusters.
+    """
+    # Create a test release
+    release_yaml = """
+    apiVersion: release.giantswarm.io/v1alpha1
+    kind: Release
+    metadata:
+      annotations:
+        giantswarm.io/docs: https://docs.giantswarm.io/use-the-api/management-api/crd/releases.release.giantswarm.io
+        giantswarm.io/release-notes: https://github.com/giantswarm/releases/tree/master/capa/v30.1.0
+      name: aws-30.1.0
+    spec:
+      apps:
+      - catalog: default
+        dependsOn:
+        - cloud-provider-aws
+        name: aws-ebs-csi-driver
+        version: 3.0.5
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: aws-ebs-csi-driver-servicemonitors
+        version: 0.1.0
+      - catalog: default
+        name: aws-nth-bundle
+        version: 1.2.1
+      - catalog: default
+        dependsOn:
+        - cert-manager
+        name: aws-pod-identity-webhook
+        version: 1.19.1
+      - catalog: default
+        name: capi-node-labeler
+        version: 1.0.2
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: cert-exporter
+        version: 2.9.5
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: cert-manager
+        version: 3.9.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: chart-operator-extensions
+        version: 1.1.2
+      - catalog: default
+        name: cilium
+        version: 0.31.1
+      - catalog: cluster
+        name: cilium-crossplane-resources
+        version: 0.2.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: cilium-servicemonitors
+        version: 0.1.2
+      - catalog: default
+        dependsOn:
+        - vertical-pod-autoscaler-crd
+        name: cloud-provider-aws
+        version: 1.30.8-gs1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: cluster-autoscaler
+        version: 1.30.4-gs1
+      - catalog: default
+        dependsOn:
+        - cilium
+        name: coredns
+        version: 1.24.0
+      - catalog: default
+        dependsOn:
+        - vertical-pod-autoscaler-crd
+        name: coredns-extensions
+        version: 0.1.2
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: etcd-defrag
+        version: 1.0.2
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: etcd-k8s-res-count-exporter
+        version: 1.10.3
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: external-dns
+        version: 3.2.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: irsa-servicemonitors
+        version: 0.1.0
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: k8s-audit-metrics
+        version: 0.10.2
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: k8s-dns-node-cache
+        version: 2.8.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: metrics-server
+        version: 2.6.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: net-exporter
+        version: 1.22.0
+      - catalog: cluster
+        dependsOn:
+        - cilium
+        name: network-policies
+        version: 0.1.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: node-exporter
+        version: 1.20.2
+      - catalog: default
+        dependsOn:
+        - coredns
+        name: observability-bundle
+        version: 1.11.0
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: observability-policies
+        version: 0.0.1
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: prometheus-blackbox-exporter
+        version: 0.5.0
+      - catalog: giantswarm
+        dependsOn:
+        - prometheus-operator-crd
+        name: security-bundle
+        version: 1.10.0
+      - catalog: default
+        name: teleport-kube-agent
+        version: 0.10.4
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: vertical-pod-autoscaler
+        version: 5.4.0
+      - catalog: default
+        name: vertical-pod-autoscaler-crd
+        version: 3.2.0
+      components:
+      - catalog: cluster
+        name: cluster-aws
+        version: 3.2.1
+      - catalog: control-plane-catalog
+        name: flatcar
+        version: 4152.2.1
+      - catalog: control-plane-catalog
+        name: kubernetes
+        version: 1.30.11
+      - catalog: control-plane-catalog
+        name: os-tooling
+        version: 1.24.0
+      date: "2025-03-18T12:00:00Z"
+      state: active
+    """
+    kube_cluster.kubectl_apply(release_yaml)
+    
+    # Create a test cluster with the release version label
+    cluster_yaml = """
+    apiVersion: cluster.x-k8s.io/v1beta1
+    kind: Cluster
+    metadata:
+      name: test-cluster
+      namespace: default
+      labels:
+        release.giantswarm.io/version: "30.1.0"
+    spec:
+      clusterNetwork:
+        services:
+          cidrBlocks: ["10.96.0.0/12"]
+        pods:
+          cidrBlocks: ["192.168.0.0/16"]
+      controlPlaneEndpoint:
+        host: test-api.example.com
+        port: 6443
+    """
+    kube_cluster.kubectl_apply(cluster_yaml)
+    
+    # Attempt to delete the release - should be prevented
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempting to delete release that is used by clusters")
+        kube_cluster.kubectl("delete release aws-30.1.0")
+        
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+    
+    assert "protect-active-releases" in stderr
+    assert "Cannot delete release aws-30.1.0" in stderr
+    
+    # Clean up
+    kube_cluster.kubectl("delete cluster test-cluster -n org-giantswarm")
+    kube_cluster.kubectl("delete release aws-30.1.0")
+
+
+@pytest.mark.smoke
+def test_allow_release_deletion_when_not_used(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy allows deletion of a Release that is not in use by any clusters.
+    """
+    # Create a test release with a different version
+    release_yaml = """
+    apiVersion: release.giantswarm.io/v1alpha1
+    kind: Release
+    metadata:
+      annotations:
+        giantswarm.io/docs: https://docs.giantswarm.io/use-the-api/management-api/crd/releases.release.giantswarm.io
+        giantswarm.io/release-notes: https://github.com/giantswarm/releases/tree/master/capa/v30.0.0
+      name: aws-30.0.0
+    spec:
+      apps:
+      - catalog: default
+        dependsOn:
+        - cloud-provider-aws
+        name: aws-ebs-csi-driver
+        version: 3.0.3
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: aws-ebs-csi-driver-servicemonitors
+        version: 0.1.0
+      - catalog: default
+        name: aws-nth-bundle
+        version: 1.2.1
+      - catalog: default
+        dependsOn:
+        - cert-manager
+        name: aws-pod-identity-webhook
+        version: 1.19.0
+      - catalog: default
+        name: capi-node-labeler
+        version: 1.0.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: cert-exporter
+        version: 2.9.4
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: cert-manager
+        version: 3.9.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: chart-operator-extensions
+        version: 1.1.2
+      - catalog: default
+        name: cilium
+        version: 0.31.0
+      - catalog: cluster
+        name: cilium-crossplane-resources
+        version: 0.2.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: cilium-servicemonitors
+        version: 0.1.2
+      - catalog: default
+        dependsOn:
+        - vertical-pod-autoscaler-crd
+        name: cloud-provider-aws
+        version: 1.30.7-gs3
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: cluster-autoscaler
+        version: 1.30.3-gs2
+      - catalog: default
+        dependsOn:
+        - cilium
+        name: coredns
+        version: 1.24.0
+      - catalog: default
+        dependsOn:
+        - vertical-pod-autoscaler-crd
+        name: coredns-extensions
+        version: 0.1.2
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: etcd-defrag
+        version: 1.0.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: etcd-k8s-res-count-exporter
+        version: 1.10.1
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: external-dns
+        version: 3.2.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: irsa-servicemonitors
+        version: 0.1.0
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: k8s-audit-metrics
+        version: 0.10.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: k8s-dns-node-cache
+        version: 2.8.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: metrics-server
+        version: 2.6.0
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: net-exporter
+        version: 1.21.0
+      - catalog: cluster
+        dependsOn:
+        - cilium
+        name: network-policies
+        version: 0.1.1
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: node-exporter
+        version: 1.20.1
+      - catalog: default
+        dependsOn:
+        - coredns
+        name: observability-bundle
+        version: 1.9.0
+      - catalog: default
+        dependsOn:
+        - kyverno-crds
+        name: observability-policies
+        version: 0.0.1
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: prometheus-blackbox-exporter
+        version: 0.5.0
+      - catalog: giantswarm
+        dependsOn:
+        - prometheus-operator-crd
+        name: security-bundle
+        version: 1.9.1
+      - catalog: default
+        name: teleport-kube-agent
+        version: 0.10.3
+      - catalog: default
+        dependsOn:
+        - prometheus-operator-crd
+        name: vertical-pod-autoscaler
+        version: 5.4.0
+      - catalog: default
+        name: vertical-pod-autoscaler-crd
+        version: 3.2.0
+      components:
+      - catalog: cluster
+        name: cluster-aws
+        version: 3.0.0
+      - catalog: control-plane-catalog
+        name: flatcar
+        version: 4152.2.1
+      - catalog: control-plane-catalog
+        name: kubernetes
+        version: 1.30.10
+      - catalog: control-plane-catalog
+        name: os-tooling
+        version: 1.23.1
+      date: "2025-02-20T12:00:00Z"
+      state: active
+    """
+    kube_cluster.kubectl_apply(release_yaml)
+    
+    # Delete should succeed as no clusters use this release
+    output = kube_cluster.kubectl("delete release aws-30.0.0")
+    LOGGER.info(f"Successfully deleted unused release, output: {output}")
+
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
 #   with pytest.raises(subprocess.CalledProcessError):
