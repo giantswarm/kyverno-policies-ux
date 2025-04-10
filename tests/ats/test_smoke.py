@@ -450,7 +450,7 @@ def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: 
       date: "2025-03-18T12:00:00Z"
       state: active
     """
-    kube_cluster.kubectl_apply(release_yaml)
+    kube_cluster.kubectl("apply", filename=release_yaml)
     
     # Create a test cluster with the release version label
     cluster_yaml = """
@@ -471,7 +471,7 @@ def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: 
         host: test-api.example.com
         port: 6443
     """
-    kube_cluster.kubectl_apply(cluster_yaml)
+    kube_cluster.kubectl("apply", filename=cluster_yaml)
     
     # Attempt to delete the release - should be prevented
     with pytest.raises(subprocess.CalledProcessError) as e:
@@ -669,7 +669,7 @@ def test_allow_release_deletion_when_not_used(fixtures, kube_cluster: Cluster) -
       date: "2025-02-20T12:00:00Z"
       state: active
     """
-    kube_cluster.kubectl_apply(release_yaml)
+    kube_cluster.kubectl("apply", filename=release_yaml)
     
     # Delete should succeed as no clusters use this release
     output = kube_cluster.kubectl("delete release aws-30.0.0")
