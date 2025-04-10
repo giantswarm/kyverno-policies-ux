@@ -289,9 +289,8 @@ def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: 
     assert "Cannot delete release aws-30.1.0" in stderr
     
     # Clean up
-    kube_cluster.kubectl("delete cluster test-cluster")
+    kube_cluster.kubectl("delete cluster test-release")
     kube_cluster.kubectl("delete release aws-30.1.0")
-    kube_cluster.kubectl("delete release aws-30.0.0")
 
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
