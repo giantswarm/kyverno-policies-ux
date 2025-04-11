@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Prevent active releases from being deleted.
+
 ### Changed
 
 - Cluster names can start with a number. Remove restriction that prevented that.

@@ -270,6 +270,28 @@ def test_dont_prevent_deletion_without_label(fixtures, kube_cluster: Cluster) ->
     )
     LOGGER.info(f"Deleting cluster without prevent-deletion label did not fail, output: {output}")
 
+@pytest.mark.smoke
+def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents deletion of a Release that is still in use by clusters.
+    """
+    kube_cluster.kubectl("apply", filename="manifests/test-release.yaml")
+    
+    # Attempt to delete the release - should be prevented
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempting to delete release that is used by clusters")
+        kube_cluster.kubectl("delete release aws-30.1.0")
+        
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+    
+    assert "protect-active-releases" in stderr
+    assert "Cannot delete release aws-30.1.0" in stderr
+    
+    # Clean up
+    kube_cluster.kubectl("delete cluster test-release")
+    kube_cluster.kubectl("delete release aws-30.1.0")
+
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
 #   with pytest.raises(subprocess.CalledProcessError):

@@ -1,0 +1,40 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-active-releases
+  annotations:
+    policies.kyverno.io/title: Protect Active Releases
+    policies.kyverno.io/subject: Releases
+    policies.kyverno.io/description: >-
+      Prevents deletion of release CRs that are still in use by clusters
+      by checking the release.giantswarm.io/version label on clusters.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: prevent-active-release-deletion
+      match:
+        resources:
+          kinds:
+            - Release
+          operations:
+            - DELETE
+      context:
+        - name: releaseName
+          variable:
+            jmesPath: "request.name"
+        - name: releaseVersion
+          variable:
+            jmesPath: "split(request.name, '-')[1:] | join('-', @)"
+        - name: clustersUsingRelease
+          apiCall:
+            urlPath: "/apis/cluster.x-k8s.io/v1beta1/clusters"
+            jmesPath: "items[?metadata.labels.\"release.giantswarm.io/version\" == '{{ `{{` }} releaseVersion {{ `}}` }}'].metadata.name"
+      validate:
+        message: "Cannot delete release {{ `{{` }} releaseName {{ `}}` }} because it is still being used by these clusters: {{ `{{` }} clustersUsingRelease {{ `}}` }}"
+        deny:
+          conditions:
+            - key: "{{ `{{` }} clustersUsingRelease {{ `}}` }}"
+              operator: NotEquals
+              value: []

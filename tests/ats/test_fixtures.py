@@ -37,6 +37,11 @@ def fixtures(kube_cluster: Cluster):
     ret = kube_cluster.kubectl("apply", filename="manifests/crds/machinedeployment-crd.yaml", output_format="json")
     LOGGER.debug("Created machinedeployment CRD")
 
+    # Release CRD
+    LOGGER.info("Create releases.release.giantswarm.io CRD")
+    ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/release-operator/refs/heads/master/config/crd/release.giantswarm.io_releases.yaml", output_format="json")
+    LOGGER.debug("Created release CRD")
+
     # Organization CRD
     LOGGER.info("Create Organization CRD")
     ret = kube_cluster.kubectl("apply", filename="https://raw.githubusercontent.com/giantswarm/organization-operator/refs/heads/main/config/crd/bases/security.giantswarm.io_organizations.yaml", output_format="json")
