@@ -1,12 +1,11 @@
-# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kyverno-policies-ux
+  name: kyverno-policies-ux-admission-controller
   labels:
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
 rules:
-  - apiGroups: 
+  - apiGroups:
     - cluster.x-k8s.io
     - infrastructure.cluster.x-k8s.io
     - infrastructure.giantswarm.io
