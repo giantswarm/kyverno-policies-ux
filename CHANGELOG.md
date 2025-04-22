@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-04-22
+
 - Add `clusterRole` for `admission-controller` on `cloud-director` clusters to support Kyverno `v0.19.0`.
 
 ## [0.10.0] - 2025-04-15
@@ -169,7 +171,8 @@ and forbid them to start with a number.
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.7.4...v0.8.0
