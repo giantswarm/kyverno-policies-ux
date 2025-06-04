@@ -13,31 +13,48 @@ spec:
   validationFailureAction: Enforce
   background: false
   rules:
-  - name: block-organization-deletion-if-has-clusters
-    match:
-      any:
-      - resources:
-          kinds:
-          - Organization
-    context:
-      - name: clusterCount
-        apiCall:
-          urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}request.oldObject.status.namespace || ''{{ `}}` }}/clusters"
-          jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
-    preconditions:
-      all:
-      - key: "{{ `{{` }} request.operation {{ `}}` }}"
-        operator: In
-        value:
-        - DELETE
-    validate:
-      message: "There are currently {{ `{{` }}clusterCount{{ `}}` }} clusters that belong to this organization. If you want to remove the organization, first remove the clusters."
-      deny:
-        conditions:
-        - key: "{{ `{{` }}request.operation{{ `}}` }}"
-          operator: In
-          value:
-          - DELETE
-        - key: "{{ `{{` }}clusterCount{{ `}}` }}"
-          operator: GreaterThan
-          value: "0"
+    - name: block-organization-deletion-if-has-clusters
+      match:
+        any:
+          - resources:
+              kinds:
+                - Organization
+      context:
+        - name: clusterCount
+          apiCall:
+            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}request.oldObject.status.namespace || ''{{ `}}` }}/clusters"
+            jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} request.operation {{ `}}` }}"
+            operator: In
+            value:
+              - DELETE
+      validate:
+        message: "There are currently {{ `{{` }}clusterCount{{ `}}` }} clusters that belong to this organization. If you want to remove the organization, first remove the clusters."
+        deny:
+          conditions:
+            - key: "{{ `{{` }}request.operation{{ `}}` }}"
+              operator: In
+              value:
+                - DELETE
+            - key: "{{ `{{` }}clusterCount{{ `}}` }}"
+              operator: GreaterThan
+              value: "0"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+  name: kyverno:gs-ux:block-organization-deletion-if-has-clusters
+rules:
+  - apiGroups:
+      - security.giantswarm.io
+    resources:
+      - organizations
+    verbs:
+      - get
+      - list
+      - watch

@@ -30,7 +30,7 @@ spec:
         - name: clustersUsingRelease
           apiCall:
             urlPath: "/apis/cluster.x-k8s.io/v1beta1/clusters"
-            jmesPath: "items[?metadata.labels.\"release.giantswarm.io/version\" == '{{ `{{` }} releaseVersion {{ `}}` }}'].metadata.name"
+            jmesPath: 'items[?metadata.labels."release.giantswarm.io/version" == ''{{ `{{` }} releaseVersion {{ `}}` }}''].metadata.name'
       validate:
         message: "Cannot delete release {{ `{{` }} releaseName {{ `}}` }} because it is still being used by these clusters: {{ `{{` }} clustersUsingRelease {{ `}}` }}"
         deny:
@@ -38,3 +38,20 @@ spec:
             - key: "{{ `{{` }} clustersUsingRelease {{ `}}` }}"
               operator: NotEquals
               value: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+  name: kyverno:gs-ux:protect-active-releases
+rules:
+  - apiGroups:
+      - release.giantswarm.io
+    resources:
+      - releases
+    verbs:
+      - get
+      - list
+      - watch
