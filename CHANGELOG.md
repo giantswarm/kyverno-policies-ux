@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cluster Roles for Kyverno towards giantswarm/issues/33418
+
 ## [0.11.0] - 2025-04-22
 
 - Add `clusterRole` for `admission-controller` on `cloud-director` clusters to support Kyverno `v0.19.0`.
@@ -113,8 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Restrict cluster names to 10 characters and forbid them to start with a number.
 - Restrict machine pools and deployments to 21 characters (10 for the cluster
-name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
-and forbid them to start with a number.
+  name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
+  and forbid them to start with a number.
 
 ### Changed
 
