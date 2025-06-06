@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-06-05
+
 ### Added
 
 - Cluster Roles for Kyverno towards giantswarm/issues/33418
@@ -175,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.8.0...v0.9.0
