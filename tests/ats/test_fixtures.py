@@ -16,7 +16,7 @@ TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.12.6"
+KYVERNO_VERSION = "v1.15.2"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):
