@@ -1,0 +1,201 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: cleanup-teleport-kube-agent-on-config-change
+  annotations:
+    policies.kyverno.io/title: Cleanup Teleport Kube Agent on Config Change
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/subject: Pod, Secret, StatefulSet
+    policies.kyverno.io/description: >-
+      This policy automatically cleans up teleport-kube-agent state and restarts
+      pods when the configuration secret changes. Teleport-kube-agent does not
+      hot-reload configuration, so pods must be restarted. Additionally, state
+      secrets must be deleted to prevent stale state issues. This policy watches
+      for changes to {cluster}-teleport-kube-agent-chart-secrets and triggers
+      cleanup of state secrets and pod deletion to force fresh restart.
+spec:
+  background: false
+  schemaValidation: false
+  rules:
+    - name: delete-teleport-kube-agent-state-secrets
+      match:
+        any:
+        - resources:
+            kinds:
+            - Secret
+            names:
+            - "*-teleport-kube-agent-chart-secrets"
+            namespaces:
+            - giantswarm
+            operations:
+            - UPDATE
+      preconditions:
+        all:
+        - key: "{{ `{{` }}request.object.data{{ `}}` }}"
+          operator: NotEquals
+          value: "{{ `{{` }}request.oldObject.data{{ `}}` }}"
+      generate:
+        apiVersion: batch/v1
+        kind: Job
+        name: "cleanup-teleport-state-{{ `{{` }}request.object.metadata.resourceVersion{{ `}}` }}"
+        namespace: kube-system
+        synchronize: false
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: kyverno
+              kyverno.io/cleanup-trigger: teleport-config-change
+              app: teleport-kube-agent
+          spec:
+            ttlSecondsAfterFinished: 300
+            template:
+              metadata:
+                labels:
+                  app: teleport-kube-agent
+                  kyverno.io/cleanup-job: "true"
+              spec:
+                serviceAccountName: kyverno-cleanup-teleport-state
+                restartPolicy: OnFailure
+                automountServiceAccountToken: true
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  seccompProfile:
+                    type: RuntimeDefault
+                containers:
+                - name: cleanup
+                  image: gsoci.azurecr.io/giantswarm/docker-kubectl:1.24.2
+                  imagePullPolicy: IfNotPresent
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    runAsNonRoot: true
+                    runAsUser: 1000
+                    capabilities:
+                      drop:
+                      - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+                  command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    set -euo pipefail
+                    echo "=== Teleport Kube Agent State Cleanup (Kyverno) ==="
+                    echo "Triggered by config change: {{ `{{` }}request.object.metadata.name{{ `}}` }}"
+                    echo "Config version: {{ `{{` }}request.object.metadata.resourceVersion{{ `}}` }}"
+                    echo ""
+                    
+                    # Delete state secrets
+                    echo "Deleting state secrets..."
+                    for i in 0 1 2; do
+                      secret="teleport-kube-agent-$i-state"
+                      echo "  Deleting: $secret"
+                      kubectl delete secret "$secret" -n kube-system --ignore-not-found=true || echo "    Warning: Failed to delete $secret"
+                    done
+                    
+                    echo ""
+                    echo "Deleting teleport-kube-agent pods to trigger fresh restart..."
+                    kubectl delete pods -n kube-system -l app=teleport-kube-agent --force --grace-period=0 || echo "Warning: Failed to delete pods"
+                    
+                    echo ""
+                    echo "=== Cleanup completed successfully ==="
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-cleanup-teleport-state
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+    application.giantswarm.io/team: shield
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kyverno-cleanup-teleport-state
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+    application.giantswarm.io/team: shield
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kyverno-cleanup-teleport-state
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+    application.giantswarm.io/team: shield
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kyverno-cleanup-teleport-state
+subjects:
+- kind: ServiceAccount
+  name: kyverno-cleanup-teleport-state
+  namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kyverno-generate-teleport-cleanup-jobs
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+    application.giantswarm.io/team: shield
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "update", "patch", "delete", "get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kyverno-generate-teleport-cleanup-jobs
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+    application.giantswarm.io/team: shield
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kyverno-generate-teleport-cleanup-jobs
+subjects:
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: shield
+    rbac.kyverno.io/aggregate-to-generate-controller: "true"
+  name: kyverno:gs-ux:cleanup-teleport-kube-agent
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "update", "patch", "delete", "get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["create", "update", "patch", "delete", "get", "list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings"]
+  verbs: ["create", "update", "patch", "delete", "get", "list", "watch"]
+
