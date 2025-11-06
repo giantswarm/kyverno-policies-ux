@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add policy to automatically restart dex deployment when its configuration secret is updated.
+
 ## [0.12.0] - 2025-06-05
 
 ### Added
