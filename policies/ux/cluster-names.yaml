@@ -93,6 +93,7 @@ metadata:
   labels:
     application.giantswarm.io/team: honeybadger
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
   name: kyverno:gs-ux:cluster-names
 rules:
 - apiGroups:
@@ -110,6 +111,7 @@ metadata:
   labels:
     application.giantswarm.io/team: honeybadger
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
   name: kyverno:gs-ux:machine-deployment-names
 rules:
 - apiGroups:
@@ -127,6 +129,7 @@ metadata:
   labels:
     application.giantswarm.io/team: honeybadger
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
   name: kyverno:gs-ux:restrict-machine-pool-names
 rules:
 - apiGroups:
