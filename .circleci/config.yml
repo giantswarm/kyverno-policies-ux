@@ -50,7 +50,7 @@ jobs:
             sudo mv kyverno /usr/bin/
       - run:
           name: Run 'kyverno test'
-          command: kyverno test --detailed-results --remove-color tests/kyverno-native/
+          command: ls -la && kyverno test --detailed-results --remove-color tests/kyverno-native/
 
   test-policies:
     machine:
