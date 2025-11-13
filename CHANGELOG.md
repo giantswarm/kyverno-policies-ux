@@ -2,14 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
 
 - Add policy to automatically restart dex deployment when its configuration secret is updated.
+- Added policy to automatically inject the 'cluster-app-installation-values' config map to any App CR that
+  deploys a "cluster-\*" app and doesn't have that CM in its `extraConfigs`
 
 ### Fixed
 
@@ -115,7 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2023-06-20
 
-- Revert 38: some customer clusters violate the rule that machine deployment names should not start with a number.
+- Revert 38: some customer clusters violate the rule that machine deployment names should not start with a
+  number.
 
 ## [0.3.0] - 2023-06-20
 
@@ -126,9 +129,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Restrict cluster names to 10 characters and forbid them to start with a number.
-- Restrict machine pools and deployments to 21 characters (10 for the cluster
-  name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
-  and forbid them to start with a number.
+- Restrict machine pools and deployments to 21 characters (10 for the cluster name prefix, 1 for a delimiter
+  '-' and 10 for the deployment/pool name itself) and forbid them to start with a number.
 
 ### Changed
 
@@ -151,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Add default value when trying to look up the organization namespace from the organization status field, as this may be empty when the organization was just created.
+- Add default value when trying to look up the organization namespace from the organization status field, as
+  this may be empty when the organization was just created.
 
 ## [0.2.0] - 2023-03-07
 
@@ -172,7 +175,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Validation of `giantswarm.io/service-priority` label values on `clusters.cluster.x-k8s.io/v*/Cluster` resources.
+- Validation of `giantswarm.io/service-priority` label values on `clusters.cluster.x-k8s.io/v*/Cluster`
+  resources.
 
 ### Fixed
 
