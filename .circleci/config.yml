@@ -108,6 +108,11 @@ workflows:
             tags:
               only: /^v.*/
 
+      - test-policies-kyverno-native:
+          # Needed to trigger job also on git tag.
+          filters:
+            tags:
+              only: /^v.*/
       - test-policies:
           # Needed to trigger job also on git tag.
           filters:
