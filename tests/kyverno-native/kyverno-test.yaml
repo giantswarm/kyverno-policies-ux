@@ -1,0 +1,23 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: prepend-cluster-app-config-map-test
+policies:
+  - ../../policies/ux/prepend-cluster-app-config-map.yaml
+resources:
+  - prepend-cluster-app-config-map/app-pre.yaml
+results:
+  - policy: prepend-cluster-app-config-map
+    rule: check-and-add-cluster-app-config
+    resources:
+      - org-piontec/hello-world-app
+    kind: App
+    patchedResources: prepend-cluster-app-config-map/app-post.yaml
+    result: pass
+  - policy: prepend-cluster-app-config-map
+    rule: check-and-add-cluster-app-config
+    resources:
+      - org-piontec/hello-world-app2
+    kind: App
+    patchedResources: prepend-cluster-app-config-map/app-post.yaml
+    result: skip
