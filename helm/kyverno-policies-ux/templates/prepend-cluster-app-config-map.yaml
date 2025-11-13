@@ -1,0 +1,41 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prepend-cluster-app-config-map
+  annotations:
+    policies.kyverno.io/title:
+      Prepend 'cluster-app-installation-values' ConfigMap to App CR extraConfigs for cluster-* charts
+    policies.kyverno.io/subject: App
+    policies.kyverno.io/description: >
+      Checks if the 'cluster-app-installation-values' ConfigMap is in the extraConfigs list of a cluster-* App
+      CR, and if not, prepends it as the first entry.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-and-add-cluster-app-config
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      preconditions:
+        all:
+          - key:
+              "{{ `{{` }} request.object.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
+              namespace=='default'] | length(@) {{ `}}` }}"
+            operator: Equals
+            value: "0"
+          - key: "{{ `{{` }} request.object.spec.name {{ `}}` }}"
+            operator: Equals
+            value: "cluster-*"
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/extraConfigs/0
+            value:
+              kind: configMap
+              name: cluster-app-installation-values
+              namespace: default
