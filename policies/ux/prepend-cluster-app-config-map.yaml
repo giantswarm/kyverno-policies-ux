@@ -5,11 +5,12 @@ metadata:
   labels:
     application.giantswarm.io/team: honeybadger
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
     rbac.kyverno.io/aggregate-to-reports-controller: "true"
   name: kyverno:gs-ux:prepend-cluster-app-config-map
 rules:
   - apiGroups:
-      - application.giantswarm.io/v1alpha1
+      - application.giantswarm.io
     resources:
       - apps
     verbs:
@@ -17,6 +18,7 @@ rules:
       - list
       - watch
       - update
+      - view
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -49,9 +51,33 @@ spec:
             operator: Equals
             value: "0"
           - key: "{{ request.object.spec.name }}"
-            operator: Equals
-            value: "cluster-*"
+            operator: AnyIn
+            value:
+              - cluster-aws
+              - cluster-azure
+              - cluster-cloud-director
+              - cluster-vsphere
       mutate:
+        # disable the following 2 attributes to disable mutation of already existing Apps
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key:
+                    "{{ target.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
+                    namespace=='default'] | length(@) }}"
+                  operator: Equals
+                  value: "0"
+                - key: "{{ target.spec.name }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+        # end
         patchesJson6902: |-
           - op: add
             # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
