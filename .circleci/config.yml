@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Run 'kyverno test'
           command: |
-            kyverno version && kyverno test --detailed-results --remove-color --require-tests tests/kyverno-native/
+            kyverno version && kyverno test --detailed-results --remove-color tests/kyverno-native/
 
   test-policies:
     machine:

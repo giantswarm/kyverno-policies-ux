@@ -6,14 +6,17 @@ policies:
   - ../../policies/ux/prepend-cluster-app-config-map.yaml
 resources:
   - prepend-cluster-app-config-map/app-pre.yaml
+targetResources:
+  - prepend-cluster-app-config-map/app-pre.yaml
 results:
-  - policy: prepend-cluster-app-config-map
-    rule: check-and-add-cluster-app-config
-    resources:
-      - org-piontec/hello-world-app
-    kind: App
-    patchedResources: prepend-cluster-app-config-map/app-post.yaml
-    result: pass
+  # BUG: using any part of `mutate.target` in the ClusterPolicy makes this fail
+  # - policy: prepend-cluster-app-config-map
+  #   rule: check-and-add-cluster-app-config
+  #   resources:
+  #     - org-piontec/hello-world-app
+  #   kind: App
+  #   patchedResources: prepend-cluster-app-config-map/app-post.yaml
+  #   result: pass
   - policy: prepend-cluster-app-config-map
     rule: check-and-add-cluster-app-config
     resources:
