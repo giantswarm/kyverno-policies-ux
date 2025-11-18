@@ -57,6 +57,7 @@ spec:
               - cluster-azure
               - cluster-cloud-director
               - cluster-vsphere
+              - cluster-eks
       mutate:
         # disable the following 2 attributes to disable mutation of already existing Apps
         mutateExistingOnPolicyUpdate: true
@@ -77,6 +78,7 @@ spec:
                     - cluster-azure
                     - cluster-cloud-director
                     - cluster-vsphere
+                    - cluster-eks
         # end
         patchesJson6902: |-
           - op: add
