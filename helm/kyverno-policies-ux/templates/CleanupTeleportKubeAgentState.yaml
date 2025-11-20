@@ -97,8 +97,8 @@ spec:
                     done
                     
                     echo ""
-                    echo "Deleting teleport-kube-agent pods to trigger fresh restart..."
-                    kubectl delete pods -n kube-system -l app=teleport-kube-agent --force --grace-period=0 || echo "Warning: Failed to delete pods"
+                    echo "Restarting teleport-kube-agent StatefulSet..."
+                    kubectl rollout restart statefulset/teleport-kube-agent -n kube-system || echo "Warning: Failed to restart StatefulSet"
                     
                     echo ""
                     echo "=== Cleanup completed successfully ==="
@@ -126,9 +126,9 @@ rules:
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["get", "list", "delete"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "delete"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["get", "list", "patch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
