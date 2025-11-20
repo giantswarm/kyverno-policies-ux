@@ -1,0 +1,92 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:prepend-cluster-app-config-map
+rules:
+  - apiGroups:
+      - application.giantswarm.io
+    resources:
+      - apps
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - view
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prepend-cluster-app-config-map
+  labels:
+    application.giantswarm.io/team: honeybadger
+  annotations:
+    policies.kyverno.io/title:
+      Prepend 'cluster-app-installation-values' ConfigMap to App CR extraConfigs for cluster-* charts
+    policies.kyverno.io/subject: App
+    policies.kyverno.io/description: >
+      Checks if the 'cluster-app-installation-values' ConfigMap is in the extraConfigs list of a cluster-* App
+      CR, and if not, prepends it as the first entry.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-and-add-cluster-app-config
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      preconditions:
+        all:
+          - key:
+              "{{ `{{` }} request.object.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
+              namespace=='default'] | length(@) {{ `}}` }}"
+            operator: Equals
+            value: "0"
+          - key: "{{ `{{` }} request.object.spec.name {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - cluster-aws
+              - cluster-azure
+              - cluster-cloud-director
+              - cluster-vsphere
+              - cluster-eks
+      mutate:
+        # disable the following 2 attributes to disable mutation of already existing Apps
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key:
+                    "{{ `{{` }} target.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
+                    namespace=='default'] | length(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "0"
+                - key: "{{ `{{` }} target.spec.name {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+                    - cluster-eks
+        # end
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/extraConfigs/0
+            value:
+              kind: configMap
+              name: cluster-app-installation-values
+              namespace: default
+              priority: 10

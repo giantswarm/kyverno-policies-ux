@@ -1,0 +1,23 @@
+apiVersion: application.giantswarm.io/v1alpha1
+kind: App
+metadata:
+  name: hello-world-app
+  namespace: org-piontec
+  labels:
+    app-operator.giantswarm.io/version: 0.0.0
+spec:
+  catalog: giantswarm
+  config:
+    configMap:
+      name: hello-config
+      namespace: org-piontec
+  kubeConfig:
+    inCluster: true
+  name: cluster-aws
+  namespace: org-piontec
+  version: 2.9.1
+  extraConfigs:
+    - kind: configMap
+      name: cluster-app-installation-values
+      namespace: giantswarm
+      priority: 10

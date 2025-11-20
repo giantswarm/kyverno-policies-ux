@@ -36,6 +36,22 @@ jobs:
         command: |
           make verify
 
+  test-policies-kyverno-native:
+    machine:
+      image: ubuntu-2204:2024.08.1
+    steps:
+      - checkout
+      - run:
+          name: Download kyverno CLI
+          command: |
+            curl -LO https://github.com/kyverno/kyverno/releases/download/v1.14.0/kyverno-cli_v1.14.0_linux_x86_64.tar.gz
+            tar -xvf kyverno-cli_v1.14.0_linux_x86_64.tar.gz
+            sudo mv kyverno /usr/bin/
+      - run:
+          name: Run 'kyverno test'
+          command: |
+            kyverno version && kyverno test --detailed-results --remove-color tests/kyverno-native/
+
   test-policies:
     machine:
       image: ubuntu-2204:2024.08.1
@@ -93,7 +109,15 @@ workflows:
           tags:
             only: /^v.*/
 
+    - test-policies-kyverno-native:
+        # Needed to trigger job also on git tag.
+        filters:
+          tags:
+            only: /^v.*/
+
     - test-policies:
+        requires:
+          - test-policies-kyverno-native
           # Needed to trigger job also on git tag.
         filters:
           tags:

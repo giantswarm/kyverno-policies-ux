@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add policy to automatically restart dex deployment when its configuration secret is updated.
+- Added policy to automatically inject the 'cluster-app-installation-values' config map to any App CR that
+  deploys a "cluster-\*" app and doesn't have that CM in its `extraConfigs`
 
 ### Fixed
 
