@@ -40,3 +40,4 @@ spec:
     - kind: configMap
       name: cluster-app-installation-values
       namespace: default
+      priority: 1

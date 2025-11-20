@@ -10,6 +10,10 @@ targetResources:
   - prepend-cluster-app-config-map/app-pre.yaml
 results:
   # BUG: using any part of `mutate.target` in the ClusterPolicy makes this fail
+  # For now, this test has to be run manually. To run it, first comment out
+  # the section in the policy file that is responsible for injecting
+  # into existing resources (the commented section), then uncomment the
+  # block below.
   # - policy: prepend-cluster-app-config-map
   #   rule: check-and-add-cluster-app-config
   #   resources:
