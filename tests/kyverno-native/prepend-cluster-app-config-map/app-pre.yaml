@@ -39,5 +39,5 @@ spec:
   extraConfigs:
     - kind: configMap
       name: cluster-app-installation-values
-      namespace: default
+      namespace: giantswarm
       priority: 1

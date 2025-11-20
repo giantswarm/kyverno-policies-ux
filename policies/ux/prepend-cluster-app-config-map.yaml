@@ -47,7 +47,7 @@ spec:
         all:
           - key:
               "{{ request.object.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-              namespace=='default'] | length(@) }}"
+              namespace=='giantswarm'] | length(@) }}"
             operator: Equals
             value: "0"
           - key: "{{ request.object.spec.name }}"
@@ -68,7 +68,7 @@ spec:
               all:
                 - key:
                     "{{ target.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-                    namespace=='default'] | length(@) }}"
+                    namespace=='giantswarm'] | length(@) }}"
                   operator: Equals
                   value: "0"
                 - key: "{{ target.spec.name }}"
@@ -87,5 +87,5 @@ spec:
             value:
               kind: configMap
               name: cluster-app-installation-values
-              namespace: default
+              namespace: giantswarm
               priority: 10
