@@ -4,10 +4,6 @@ metadata:
   name: cleanup-teleport-kube-agent-on-config-change
   annotations:
     policies.kyverno.io/title: Cleanup Teleport Kube Agent on Config Change
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: medium
-    policies.kyverno.io/minversion: 1.6.0
-    policies.kyverno.io/subject: Pod, Secret, StatefulSet
     policies.kyverno.io/description: >-
       This policy automatically cleans up teleport-kube-agent state and restarts
       pods when the configuration secret changes. Teleport-kube-agent does not
