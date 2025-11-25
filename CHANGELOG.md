@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add policy to automatically restart dex deployment when its configuration secret is updated.
+- Add policy to cleanup teleport-kube-agent state and restart pods on configuration changes.
 
 ### Fixed
 
