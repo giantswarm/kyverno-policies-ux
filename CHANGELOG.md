@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.2] - 2025-11-26
+
 ### Changed
 
 - Rename `restart-dex-on-secrets-change` policy to `restart-dex-wc-on-secrets-change` to avoid naming conflict with kyverno-policies-dx.
@@ -192,7 +194,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...HEAD
+[0.12.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.10.0...v0.11.0
