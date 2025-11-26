@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rename `restart-dex-on-secrets-change` policy to `restart-dex-wc-on-secrets-change` to avoid naming conflict with kyverno-policies-dx.
+
 ## [0.12.1] - 2025-11-25
 
 ### Added
