@@ -1,0 +1,85 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-kubeadmcontrolplane-deletion-if-has-workers
+  annotations:
+    policies.kyverno.io/title: Block KubeadmControlPlane deletion if there are worker nodes
+    policies.kyverno.io/subject: KubeadmControlPlane
+    policies.kyverno.io/description: >-
+      We want to block the deletion of KubeadmControlPlane resources that still have
+      MachinePools or MachineDeployments belonging to the same cluster.
+      This prevents accidentally deleting the control plane before worker nodes are removed.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: block-kubeadmcontrolplane-deletion-if-has-workers
+      match:
+        any:
+          - resources:
+              kinds:
+                - KubeadmControlPlane
+      context:
+        - name: clusterName
+          variable:
+            jmesPath: "request.oldObject.metadata.labels.\"cluster.x-k8s.io/cluster-name\" || ''"
+        - name: namespace
+          variable:
+            jmesPath: "request.oldObject.metadata.namespace || ''"
+        - name: machinePoolCount
+          apiCall:
+            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinepools?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
+            jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
+        - name: machineDeploymentCount
+          apiCall:
+            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinedeployments?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
+            jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
+        - name: totalWorkerCount
+          variable:
+            value: "{{ `{{` }} add(machinePoolCount, machineDeploymentCount) {{ `}}` }}"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} request.operation {{ `}}` }}"
+            operator: In
+            value:
+              - DELETE
+          - key: "{{ `{{` }} clusterName {{ `}}` }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        message: "There are currently {{ `{{` }}totalWorkerCount{{ `}}` }} worker node groups ({{ `{{` }}machinePoolCount{{ `}}` }} MachinePools and {{ `{{` }}machineDeploymentCount{{ `}}` }} MachineDeployments) that belong to cluster '{{ `{{` }}clusterName{{ `}}` }}'. If you want to remove the KubeadmControlPlane, first remove the worker node groups."
+        deny:
+          conditions:
+            - key: "{{ `{{` }}totalWorkerCount{{ `}}` }}"
+              operator: GreaterThan
+              value: "0"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:block-kubeadmcontrolplane-deletion-if-has-workers
+rules:
+  - apiGroups:
+      - controlplane.cluster.x-k8s.io
+    resources:
+      - kubeadmcontrolplanes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - cluster.x-k8s.io
+    resources:
+      - machinepools
+      - machinedeployments
+    verbs:
+      - get
+      - list
+      - watch
+
+
