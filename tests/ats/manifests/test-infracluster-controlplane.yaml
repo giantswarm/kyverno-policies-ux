@@ -1,0 +1,57 @@
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test-infra-cp
+  namespace: org-giantswarm
+  labels:
+    release.giantswarm.io/version: 30.1.0
+    giantswarm.io/cluster: test-infra-cp
+    cluster.x-k8s.io/cluster-name: test-infra-cp
+    giantswarm.io/organization: giantswarm
+spec:
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: AWSCluster
+    name: test-infra-cp
+    namespace: org-giantswarm
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test-infra-cp
+    namespace: org-giantswarm
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: AWSCluster
+metadata:
+  name: test-infra-cp
+  namespace: org-giantswarm
+  labels:
+    cluster.x-k8s.io/cluster-name: test-infra-cp
+    giantswarm.io/cluster: test-infra-cp
+    giantswarm.io/organization: giantswarm
+spec:
+  region: us-east-1
+  sshKeyName: default
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test-infra-cp
+  namespace: org-giantswarm
+  labels:
+    cluster.x-k8s.io/cluster-name: test-infra-cp
+    giantswarm.io/cluster: test-infra-cp
+    giantswarm.io/organization: giantswarm
+    giantswarm.io/service-priority: highest
+    release.giantswarm.io/version: 33.0.1
+spec:
+  kubeadmConfigSpec: {}
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      kind: AWSMachineTemplate
+      name: test-infra-cp
+      namespace: org-giantswarm
+  version: "1.33.0"
+

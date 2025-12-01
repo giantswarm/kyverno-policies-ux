@@ -2,7 +2,7 @@ managementCluster:
   name: ""
 
 provider:
-  kind: ""
+  kind: "capa"
   flavor: capi
 
 preventDeletionLabelPolicy:

@@ -39,6 +39,9 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.info("Create machinedeployments.cluster.x-k8s.io CRD")
     ret = kube_cluster.kubectl("apply", filename="manifests/crds/machinedeployment-crd.yaml", output_format="json")
     LOGGER.debug("Created machinedeployment CRD")
+    LOGGER.info("Create awscluster.infrastructure.cluster.x-k8s.io CRD")
+    ret = kube_cluster.kubectl("apply", filename="manifests/crds/awscluster-crd.yaml", output_format="json")
+    LOGGER.debug("Created awscluster CRD")
 
     # Release CRD
     LOGGER.info("Create releases.release.giantswarm.io CRD")

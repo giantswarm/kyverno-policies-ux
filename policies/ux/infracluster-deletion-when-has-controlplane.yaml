@@ -1,14 +1,13 @@
-[[- if eq .Values.provider.flavor "capa" ]]
+[[- if eq .Values.provider.kind "capa" ]]
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: block-infracluster-deletion-if-has-controlplane
   annotations:
     policies.kyverno.io/title: Block infrastructure cluster deletion if KubeadmControlPlane exists
-    policies.kyverno.io/subject: AWSCluster, AzureCluster, VCDCluster, VsphereCluster
+    policies.kyverno.io/subject: AWSCluster
     policies.kyverno.io/description: >-
-      We want to block the deletion of infrastructure cluster resources (AWSCluster, AzureCluster,
-      VCDCluster, VsphereCluster) when the KubeadmControlPlane for the owning Cluster still exists.
+      We want to block the deletion of infrastructure cluster resources (AWSCluster) when the KubeadmControlPlane for the owning Cluster still exists.
       This prevents accidentally deleting the infrastructure before the control plane is removed.
 spec:
   validationFailureAction: Enforce
@@ -20,9 +19,6 @@ spec:
           - resources:
               kinds:
                 - AWSCluster
-                - AzureCluster
-                - VCDCluster
-                - VsphereCluster
       context:
         - name: clusterName
           variable:
@@ -64,9 +60,6 @@ rules:
       - infrastructure.cluster.x-k8s.io
     resources:
       - awsclusters
-      - azureclusters
-      - vcdclusters
-      - vsphereclusters
     verbs:
       - get
       - list

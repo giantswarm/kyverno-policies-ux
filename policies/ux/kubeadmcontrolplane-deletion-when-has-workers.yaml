@@ -47,7 +47,7 @@ spec:
             operator: NotEquals
             value: ""
       validate:
-        message: "There are currently {{totalWorkerCount}} worker node groups ({{machinePoolCount}} MachinePools and {{machineDeploymentCount}} MachineDeployments) that belong to cluster '{{clusterName}}'. If you want to remove the KubeadmControlPlane, first remove the worker node groups."
+        message: "There are currently {{totalWorkerCount}} worker node pools ({{machinePoolCount}} MachinePools and {{machineDeploymentCount}} MachineDeployments) that belong to cluster '{{clusterName}}'. If you want to remove the KubeadmControlPlane, first remove the worker node pools."
         deny:
           conditions:
             - key: "{{totalWorkerCount}}"
@@ -80,5 +80,3 @@ rules:
       - get
       - list
       - watch
-
-
