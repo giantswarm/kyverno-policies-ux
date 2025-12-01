@@ -1,3 +1,4 @@
+[[- if eq .Values.provider.flavor "capa" ]]
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -79,3 +80,4 @@ rules:
       - list
       - watch
 
+[[- end]]
