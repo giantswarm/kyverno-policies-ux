@@ -1,4 +1,3 @@
-[[- if eq .Values.provider.flavor "capi" ]]
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -85,7 +84,6 @@ spec:
           - key: "{{ length('{{request.object.metadata.name}}') }}"
             operator: GreaterThan
             value: 31
-[[- end]]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

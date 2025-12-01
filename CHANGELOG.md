@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Remove policies that only applied to `vintage` clusters.
+- Remove logic to conditionally deploy policies to CAPI, because all clusters are CAPI now.
+
 ## [0.12.2] - 2025-11-26
 
 ### Changed
