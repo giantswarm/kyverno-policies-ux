@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add policy to prevent deletion of `KubeadmControlPlane` resources when there are `MachinePools` or `MachineDeployments` belonging to the same cluster.
+- Add policy to prevent deletion of infrastructure cluster resources (only `AWSCluster` for now) when the `KubeadmControlPlane` for the owning cluster still exists.
+
 ### Removed
 
 - Remove policies that only applied to `vintage` clusters.

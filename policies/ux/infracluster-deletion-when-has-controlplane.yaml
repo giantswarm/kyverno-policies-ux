@@ -1,0 +1,76 @@
+[[- if eq .Values.provider.kind "capa" ]]
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-infracluster-deletion-if-has-controlplane
+  annotations:
+    policies.kyverno.io/title: Block infrastructure cluster deletion if KubeadmControlPlane exists
+    policies.kyverno.io/subject: AWSCluster
+    policies.kyverno.io/description: >-
+      We want to block the deletion of infrastructure cluster resources (AWSCluster) when the KubeadmControlPlane for the owning Cluster still exists.
+      This prevents accidentally deleting the infrastructure before the control plane is removed.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: block-infracluster-deletion-if-has-controlplane
+      match:
+        any:
+          - resources:
+              kinds:
+                - AWSCluster
+      context:
+        - name: clusterName
+          variable:
+            jmesPath: "request.oldObject.metadata.labels.\"cluster.x-k8s.io/cluster-name\" || ''"
+        - name: namespace
+          variable:
+            jmesPath: "request.oldObject.metadata.namespace || ''"
+        - name: controlPlaneCount
+          apiCall:
+            urlPath: "/apis/controlplane.cluster.x-k8s.io/v1beta1/namespaces/{{namespace}}/kubeadmcontrolplanes?labelSelector=cluster.x-k8s.io/cluster-name={{clusterName}}"
+            jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
+      preconditions:
+        all:
+          - key: "{{ request.operation }}"
+            operator: In
+            value:
+              - DELETE
+          - key: "{{ clusterName }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        message: "There is a KubeadmControlPlane resource for cluster '{{clusterName}}'. If you want to remove the infrastructure cluster, first remove the KubeadmControlPlane."
+        deny:
+          conditions:
+            - key: "{{controlPlaneCount}}"
+              operator: GreaterThan
+              value: "0"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:block-infracluster-deletion-if-has-controlplane
+rules:
+  - apiGroups:
+      - infrastructure.cluster.x-k8s.io
+    resources:
+      - awsclusters
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - controlplane.cluster.x-k8s.io
+    resources:
+      - kubeadmcontrolplanes
+    verbs:
+      - get
+      - list
+      - watch
+
+[[- end]]
