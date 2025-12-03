@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2025-12-03
+
 ### Added
 
 - Add policy to prevent deletion of `KubeadmControlPlane` resources when there are `MachinePools` or `MachineDeployments` belonging to the same cluster.
@@ -204,7 +206,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...v0.12.0
