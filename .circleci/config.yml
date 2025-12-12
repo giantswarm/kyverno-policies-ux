@@ -106,6 +106,7 @@ workflows:
         attach_workspace: true
         chart: kyverno-policies-ux
         context: architect
+        executor: app-build-suite
         requires:
         - test-policies
           # Needed to trigger job also on git tag.
