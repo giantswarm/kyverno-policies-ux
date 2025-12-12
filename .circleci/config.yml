@@ -42,7 +42,7 @@ jobs:
     environment:
       KIND_VERSION: v0.22.0
       KUBERNETES_VERSION: v1.29.10
-      DABS_VERSION: v1.1.5
+      DABS_VERSION: v1.4.3
     steps:
     - checkout
     - run:
@@ -106,6 +106,7 @@ workflows:
         attach_workspace: true
         chart: kyverno-policies-ux
         context: architect
+        executor: app-build-suite
         requires:
         - test-policies
           # Needed to trigger job also on git tag.
