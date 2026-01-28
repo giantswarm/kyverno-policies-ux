@@ -13,7 +13,7 @@ preventDeletionLabelPolicy:
     - AWSMachineDeployment
     - AzureCluster
     - AzureMachinePool
-    - Cluster
+    - cluster.x-k8s.io/v1beta2/Cluster
     - ConfigMap
     - G8sControlPlane
     - KubeadmControlPlane

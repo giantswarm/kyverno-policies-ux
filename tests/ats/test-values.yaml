@@ -7,7 +7,7 @@ provider:
 
 preventDeletionLabelPolicy:
   resources:
-    - Cluster
+    - cluster.x-k8s.io/v1beta2/Cluster
     - MachineDeployment
     - MachinePool
     - AWSCluster
