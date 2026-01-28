@@ -29,6 +29,10 @@ spec:
     {{- end }}
   {{- end }}
 {{- end }}
+    # Needed for resources that have duplicated names across different apiGroups, eg: cluster.postgresql.org/v1/Cluster and cluster.x-k8s.io/v1beta2/Cluster
+{{- range .Values.preventDeletionLabelPolicy.gvk }}
+          - {{ . }}
+{{- end }}
           selector:
             matchLabels:
               giantswarm.io/prevent-deletion: "*"
