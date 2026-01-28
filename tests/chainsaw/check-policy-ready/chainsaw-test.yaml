@@ -1,0 +1,78 @@
+# Example of how to check if a Policy is ready using templates
+# Note: The policy needs to already exist in the test cluster.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: check-policy-is-ready
+spec:
+  steps:
+  - name: check if policy block-resource-deletion-if-has-prevent-deletion-label is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-resource-deletion-if-has-prevent-deletion-label
+  - name: check if policy protect-active-releases is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: protect-active-releases
+  - name: check if policy block-organization-deletion-if-has-clusters is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-organization-deletion-if-has-clusters
+  - name: check if policy block-kubeadmcontrolplane-deletion-if-has-workers is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-kubeadmcontrolplane-deletion-if-has-workers
+  - name: check if policy restrict-cluster-label-service-priority is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: restrict-cluster-label-service-priority
+  - name: check if policy machine-deployment-names is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: machine-deployment-names
+  - name: check if policy restrict-machine-pool-names is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: restrict-machine-pool-names
+  - name: check if policy cluster-names is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: cluster-names
+  - name: check if policy restart-dex-wc-on-secrets-change is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: restart-dex-wc-on-secrets-change
+  - name: check if policy cleanup-teleport-kube-agent-on-config-change is ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: cleanup-teleport-kube-agent-on-config-change
