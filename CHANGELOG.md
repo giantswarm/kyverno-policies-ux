@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-01-28
+
 ### Changed
 
 - Change policies to use `AnyIn` instead of `In`, as it has been deprecated.
@@ -218,7 +220,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.1...v0.12.2
