@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Change policies to use `AnyIn` instead of `In`, as it has been deprecated.
+- Add new `gvk` section to values to specify GVKs without verification to the `block-resource-deletion-if-has-prevent-deletion-label` ClusterPolicy.
+
 ## [0.13.1] - 2025-12-12
 
 ### Changed
