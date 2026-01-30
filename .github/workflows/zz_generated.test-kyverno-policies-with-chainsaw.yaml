@@ -2,7 +2,7 @@
 #
 #    devctl
 #
-#    https://github.com/giantswarm/devctl/blob/f7e5e949ad2a8a3fee8bc163fccca25f60faafff/pkg/gen/input/workflows/internal/file/test-kyverno-policies-with-chainsaw.yaml.template
+#    https://github.com/giantswarm/devctl/blob/1acd23e6a78c21ca61ccbe8a7e5a8a3139feeab5/pkg/gen/input/workflows/internal/file/test-kyverno-policies-with-chainsaw.yaml.template
 #
 
 name: "Test Kyverno Policies with Chainsaw"
@@ -18,10 +18,15 @@ env:
   # repository: giantswarm/kyverno-crds
   KYVERNO_VERSION: v1.16.0
   HELM_VERSION: 4
+
+permissions: {}
+
 jobs:
   test-policies:
     name: "Test Kyverno Policies"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
