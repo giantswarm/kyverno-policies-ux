@@ -1,0 +1,72 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: cluster-names
+spec:
+  steps:
+  - name: install-cluster-crd
+    try:
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: clusters.cluster.x-k8s.io
+          spec:
+            group: cluster.x-k8s.io
+            names:
+              kind: Cluster
+              listKind: ClusterList
+              plural: clusters
+              singular: cluster
+            scope: Namespaced
+            versions:
+            - name: v1beta1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+            - name: v1beta2
+              served: true
+              storage: false
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: cluster-names
+
+  - name: allow-valid-cluster-name
+    try:
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: short-cluster
+          spec: {}
+
+  - name: deny-cluster-name-too-long
+    try:
+    - apply:
+        expect:
+        - check:
+            ($error != null): true
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: this-name-is-too-long-x
+          spec: {}

@@ -1,0 +1,97 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: restart-dex-wc-on-secrets-change
+spec:
+  steps:
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: restart-dex-wc-on-secrets-change
+
+  - name: create-dex-deployment
+    try:
+    - apply:
+        resource:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: dex
+          spec:
+            selector:
+              matchLabels:
+                app: dex
+            template:
+              metadata:
+                labels:
+                  app: dex
+              spec:
+                containers:
+                - name: dex
+                  image: ghcr.io/dex-idp/dex:v2.37.0
+
+  # Create the initial secret (CREATE operation — policy only triggers on UPDATE)
+  - name: create-dex-secret-initial
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: dex
+          data:
+            # base64 for "hello"
+            config: aGVsbG8=
+
+  # Update secret with same data — precondition (data changed) is false, no mutation
+  - name: no-mutation-when-data-unchanged
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: dex
+          data:
+            config: aGVsbG8=
+    - script:
+        # The restart annotation should NOT be present yet since data didn't change
+        content: |
+          annotation=$(kubectl get deployment dex -n "$NAMESPACE" -o jsonpath='{.spec.template.metadata.annotations.kyverno\.io/restart-reason}' 2>/dev/null || true)
+          if [ -n "$annotation" ]; then
+            echo "ERROR: Deployment was mutated when secret data was unchanged (got annotation: $annotation)"
+            exit 1
+          fi
+          echo "OK: No restart annotation present as expected"
+
+  # Update secret with different data — mutation is triggered
+  - name: update-dex-secret-triggers-restart
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: dex
+          data:
+            # base64 for "world"
+            config: d29ybGQ=
+
+  # Assert the Deployment was patched with the restart annotation (constant value)
+  - name: assert-deployment-restarted
+    try:
+    - assert:
+        timeout: 30s
+        resource:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: dex
+          spec:
+            template:
+              metadata:
+                annotations:
+                  kyverno.io/restart-reason: config-update

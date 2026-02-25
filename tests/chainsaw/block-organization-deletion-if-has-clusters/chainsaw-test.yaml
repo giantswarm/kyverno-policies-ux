@@ -1,0 +1,135 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: block-organization-deletion-if-has-clusters
+spec:
+  steps:
+  - name: install-organization-crd
+    try:
+    # Organization CRD without status subresource so status fields can be set via regular apply
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: organizations.security.giantswarm.io
+          spec:
+            group: security.giantswarm.io
+            names:
+              kind: Organization
+              listKind: OrganizationList
+              plural: organizations
+              singular: organization
+            scope: Cluster
+            versions:
+            - name: v1alpha1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+
+  - name: install-cluster-crd
+    try:
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: clusters.cluster.x-k8s.io
+          spec:
+            group: cluster.x-k8s.io
+            names:
+              kind: Cluster
+              listKind: ClusterList
+              plural: clusters
+              singular: cluster
+            scope: Namespaced
+            versions:
+            - name: v1beta1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+            - name: v1beta2
+              served: true
+              storage: false
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-organization-deletion-if-has-clusters
+
+  # Before creating any clusters: delete org with status.namespace = test namespace succeeds
+  - name: allow-delete-empty-org
+    try:
+    - apply:
+        template: true
+        resource:
+          apiVersion: security.giantswarm.io/v1alpha1
+          kind: Organization
+          metadata:
+            name: empty-org
+          status:
+            namespace: ($namespace)
+    - delete:
+        ref:
+          apiVersion: security.giantswarm.io/v1alpha1
+          kind: Organization
+          name: empty-org
+
+  # Create org + cluster in same namespace, then try to delete org → error
+  - name: deny-delete-org-with-clusters
+    try:
+    - apply:
+        template: true
+        resource:
+          apiVersion: security.giantswarm.io/v1alpha1
+          kind: Organization
+          metadata:
+            name: org-with-clusters
+          status:
+            namespace: ($namespace)
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: org-cluster
+          spec: {}
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: security.giantswarm.io/v1alpha1
+          kind: Organization
+          name: org-with-clusters
+
+  # After removing the cluster, deleting the org succeeds
+  - name: allow-delete-org-after-cluster-removed
+    try:
+    - delete:
+        ref:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          name: org-cluster
+    - delete:
+        ref:
+          apiVersion: security.giantswarm.io/v1alpha1
+          kind: Organization
+          name: org-with-clusters

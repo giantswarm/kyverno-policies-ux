@@ -1,0 +1,133 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: protect-active-releases
+spec:
+  steps:
+  - name: install-release-crd
+    try:
+    # Release is cluster-scoped per Giant Swarm convention
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: releases.release.giantswarm.io
+          spec:
+            group: release.giantswarm.io
+            names:
+              kind: Release
+              listKind: ReleaseList
+              plural: releases
+              singular: release
+            scope: Cluster
+            versions:
+            - name: v1alpha1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+
+  - name: install-cluster-crd
+    try:
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: clusters.cluster.x-k8s.io
+          spec:
+            group: cluster.x-k8s.io
+            names:
+              kind: Cluster
+              listKind: ClusterList
+              plural: clusters
+              singular: cluster
+            scope: Namespaced
+            versions:
+            - name: v1beta1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+            - name: v1beta2
+              served: true
+              storage: false
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: protect-active-releases
+
+  # No cluster uses this release: delete succeeds
+  - name: allow-delete-unused-release
+    try:
+    - apply:
+        resource:
+          apiVersion: release.giantswarm.io/v1alpha1
+          kind: Release
+          metadata:
+            name: aws-25.0.0
+          spec: {}
+    - delete:
+        ref:
+          apiVersion: release.giantswarm.io/v1alpha1
+          kind: Release
+          name: aws-25.0.0
+
+  # A cluster uses this release: delete fails.
+  # Policy extracts version by splitting name on '-' and joining [1:]:
+  #   'aws-25.1.0' → split → ['aws','25.1.0'] → [1:] joined → '25.1.0'
+  # Cluster must have label release.giantswarm.io/version: 25.1.0
+  - name: deny-delete-active-release
+    try:
+    - apply:
+        resource:
+          apiVersion: release.giantswarm.io/v1alpha1
+          kind: Release
+          metadata:
+            name: aws-25.1.0
+          spec: {}
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: cluster-using-release
+            labels:
+              release.giantswarm.io/version: 25.1.0
+          spec: {}
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: release.giantswarm.io/v1alpha1
+          kind: Release
+          name: aws-25.1.0
+    cleanup:
+    - delete:
+        ref:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          name: cluster-using-release
+    - delete:
+        ref:
+          apiVersion: release.giantswarm.io/v1alpha1
+          kind: Release
+          name: aws-25.1.0

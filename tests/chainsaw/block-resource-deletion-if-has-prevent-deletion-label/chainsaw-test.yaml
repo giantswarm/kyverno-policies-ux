@@ -1,0 +1,76 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: block-resource-deletion-if-has-prevent-deletion-label
+spec:
+  steps:
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-resource-deletion-if-has-prevent-deletion-label
+
+  - name: allow-delete-without-label
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-no-prevent-label
+          data:
+            key: value
+    - delete:
+        ref:
+          apiVersion: v1
+          kind: ConfigMap
+          name: cm-no-prevent-label
+
+  - name: deny-delete-with-prevent-label
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-with-prevent-label
+            labels:
+              giantswarm.io/prevent-deletion: "true"
+          data:
+            key: value
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: v1
+          kind: ConfigMap
+          name: cm-with-prevent-label
+    # Remove the label before cleanup so Chainsaw can auto-delete the ConfigMap at test end
+    cleanup:
+    - script:
+        content: |
+          kubectl label configmap cm-with-prevent-label "giantswarm.io/prevent-deletion-" -n "$NAMESPACE" --ignore-not-found=true
+
+  - name: allow-delete-after-label-removal
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-label-removed
+            labels:
+              giantswarm.io/prevent-deletion: "true"
+          data:
+            key: value
+    - script:
+        content: |
+          kubectl label configmap cm-label-removed "giantswarm.io/prevent-deletion-" -n "$NAMESPACE"
+    - delete:
+        ref:
+          apiVersion: v1
+          kind: ConfigMap
+          name: cm-label-removed

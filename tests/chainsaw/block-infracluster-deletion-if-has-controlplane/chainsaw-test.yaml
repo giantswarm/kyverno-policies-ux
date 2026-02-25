@@ -1,0 +1,128 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: block-infracluster-deletion-if-has-controlplane
+spec:
+  # This policy is only installed when provider.kind=capa.
+  # The test will fail at the policy-ready step if deployed without capa provider config.
+  steps:
+  - name: install-awscluster-crd
+    try:
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: awsclusters.infrastructure.cluster.x-k8s.io
+          spec:
+            group: infrastructure.cluster.x-k8s.io
+            names:
+              kind: AWSCluster
+              listKind: AWSClusterList
+              plural: awsclusters
+              singular: awscluster
+            scope: Namespaced
+            versions:
+            - name: v1beta2
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+
+  - name: install-kubeadmcontrolplane-crd
+    try:
+    - apply:
+        resource:
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: kubeadmcontrolplanes.controlplane.cluster.x-k8s.io
+          spec:
+            group: controlplane.cluster.x-k8s.io
+            names:
+              kind: KubeadmControlPlane
+              listKind: KubeadmControlPlaneList
+              plural: kubeadmcontrolplanes
+              singular: kubeadmcontrolplane
+            scope: Namespaced
+            versions:
+            - name: v1beta1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: block-infracluster-deletion-if-has-controlplane
+
+  # No KubeadmControlPlane exists for this cluster: delete AWSCluster succeeds
+  - name: allow-delete-awscluster-without-controlplane
+    try:
+    - apply:
+        resource:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+          kind: AWSCluster
+          metadata:
+            name: aws-cluster-no-cp
+            labels:
+              cluster.x-k8s.io/cluster-name: cluster-no-cp
+          spec: {}
+    - delete:
+        ref:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+          kind: AWSCluster
+          name: aws-cluster-no-cp
+
+  # A KubeadmControlPlane exists for the same cluster: delete AWSCluster fails
+  - name: deny-delete-awscluster-with-controlplane
+    try:
+    - apply:
+        resource:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+          kind: AWSCluster
+          metadata:
+            name: aws-cluster-with-cp
+            labels:
+              cluster.x-k8s.io/cluster-name: cluster-with-cp
+          spec: {}
+    - apply:
+        resource:
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlane
+          metadata:
+            name: kcp-for-aws
+            labels:
+              cluster.x-k8s.io/cluster-name: cluster-with-cp
+          spec: {}
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+          kind: AWSCluster
+          name: aws-cluster-with-cp
+    cleanup:
+    - delete:
+        ref:
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlane
+          name: kcp-for-aws
+    - delete:
+        ref:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+          kind: AWSCluster
+          name: aws-cluster-with-cp
