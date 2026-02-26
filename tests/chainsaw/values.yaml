@@ -1,1 +1,3 @@
 # Placeholder for extra testing values
+provider:
+  kind: capa

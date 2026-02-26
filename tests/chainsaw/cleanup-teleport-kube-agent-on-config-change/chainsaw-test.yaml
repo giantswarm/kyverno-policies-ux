@@ -1,0 +1,72 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: cleanup-teleport-kube-agent-on-config-change
+spec:
+  steps:
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: cleanup-teleport-kube-agent-on-config-change
+
+  # Ensure the giantswarm namespace exists (apply is idempotent)
+  - name: ensure-giantswarm-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: giantswarm
+
+  # Create the initial secret (CREATE — policy only triggers on UPDATE)
+  - name: create-teleport-secret-initial
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: test-teleport-kube-agent-chart-secrets
+            namespace: giantswarm
+          data:
+            # base64 for "config-v1"
+            values.yaml: Y29uZmlnLXYx
+
+  # Update secret with different data — triggers the generate rule
+  - name: update-teleport-secret-triggers-job
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: test-teleport-kube-agent-chart-secrets
+            namespace: giantswarm
+          data:
+            # base64 for "config-v2"
+            values.yaml: Y29uZmlnLXYy
+
+  # Assert a cleanup Job was generated in kube-system with the expected label
+  - name: assert-cleanup-job-created
+    try:
+    - assert:
+        timeout: 60s
+        resource:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            namespace: kube-system
+            labels:
+              kyverno.io/cleanup-trigger: teleport-config-change
+
+  # Cleanup resources outside the test namespace
+  - name: cleanup-external-resources
+    try:
+    - script:
+        content: |
+          kubectl delete jobs -n kube-system -l "kyverno.io/cleanup-trigger=teleport-config-change" --ignore-not-found=true
+          kubectl delete secret test-teleport-kube-agent-chart-secrets -n giantswarm --ignore-not-found=true
