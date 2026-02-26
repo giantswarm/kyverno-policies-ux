@@ -108,7 +108,7 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta1
           kind: Cluster
           metadata:
-            name: cluster-using-release
+            name: cluster-for-release
             labels:
               release.giantswarm.io/version: 25.1.0
           spec: {}
@@ -125,7 +125,7 @@ spec:
         ref:
           apiVersion: cluster.x-k8s.io/v1beta1
           kind: Cluster
-          name: cluster-using-release
+          name: cluster-for-release
     - delete:
         ref:
           apiVersion: release.giantswarm.io/v1alpha1

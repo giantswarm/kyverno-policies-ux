@@ -28,18 +28,16 @@ spec:
           kind: ConfigMap
           name: cm-no-prevent-label
 
-  - name: deny-delete-with-prevent-label
+  # The protected ConfigMap is created here and intentionally NOT cleaned up in this step.
+  # It is deleted in the allow-delete-after-label-removal-2 step below so that when
+  # chainsaw's auto-cleanup for this step runs (in reverse order), the resource is already gone.
+  - name: create-protected-configmap
     try:
     - apply:
-        resource:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: cm-with-prevent-label
-            labels:
-              giantswarm.io/prevent-deletion: "true"
-          data:
-            key: value
+        file: cm-with-prevent-label.yaml
+
+  - name: deny-delete-with-prevent-label
+    try:
     - delete:
         expect:
         - check:
@@ -48,11 +46,6 @@ spec:
           apiVersion: v1
           kind: ConfigMap
           name: cm-with-prevent-label
-    # Remove the label before cleanup so Chainsaw can auto-delete the ConfigMap at test end
-    cleanup:
-    - script:
-        content: |
-          kubectl label configmap cm-with-prevent-label "giantswarm.io/prevent-deletion-" -n "$NAMESPACE" --ignore-not-found=true
 
   - name: allow-delete-after-label-removal
     try:
@@ -74,3 +67,20 @@ spec:
           apiVersion: v1
           kind: ConfigMap
           name: cm-label-removed
+
+  # Remove label from cm-with-prevent-label then assert deletion succeeds.
+  # Doing this in a dedicated step ensures chainsaw's reverse-order auto-cleanup
+  # finds the resource already gone when it reaches create-protected-configmap.
+  - name: allow-delete-protected-configmap-after-label-removal
+    try:
+    - script:
+        content: |
+          kubectl label configmap cm-with-prevent-label "giantswarm.io/prevent-deletion-" -n "$NAMESPACE"
+    - delete:
+        expect:
+        - check:
+            ($error != null): false
+        ref:
+          apiVersion: v1
+          kind: ConfigMap
+          name: cm-with-prevent-label
