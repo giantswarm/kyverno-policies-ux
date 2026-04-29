@@ -6,6 +6,18 @@ import pykube
 import pytest
 import subprocess
 
+CONFIGMAP_NAME = "cluster-app-installation-values"
+
+
+def wait_for_configmap(kube_cluster: Cluster, name: str, namespace: str, timeout_sec: int = 60) -> dict:
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        try:
+            return kube_cluster.kubectl(f"get configmap {name} -n {namespace} -o yaml")
+        except subprocess.CalledProcessError:
+            time.sleep(3)
+    raise TimeoutError(f"ConfigMap {name} in namespace {namespace} did not appear within {timeout_sec}s")
+
 LOGGER = logging.getLogger(__name__)
 
 SERVICE_PRIORITY_LABEL = "giantswarm.io/service-priority"
@@ -382,3 +394,89 @@ def test_block_infracluster_deletion_when_has_controlplane(fixtures, kube_cluste
 #     except:
 #         if res.stdout != "organization.security.giantswarm.io \"empty\" deleted":
 #             raise
+
+
+@pytest.mark.smoke
+def test_configmap_synced_to_existing_org_namespace(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks that generateExisting:true causes the policy to retroactively clone the
+    ConfigMap into org namespaces that already existed when the policy was installed.
+    """
+    for namespace in ("org-giantswarm", "org-empty"):
+        LOGGER.info(f"Waiting for {CONFIGMAP_NAME} to appear in {namespace}")
+        cm = wait_for_configmap(kube_cluster, CONFIGMAP_NAME, namespace, timeout_sec=60)
+        assert cm["data"]["testKey"] == "testValue", (
+            f"ConfigMap in {namespace} does not have expected data: {cm['data']}"
+        )
+        LOGGER.info(f"ConfigMap {CONFIGMAP_NAME} found in {namespace} with correct data")
+
+
+@pytest.mark.smoke
+def test_configmap_synced_to_new_org_namespace(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks that creating a new org-* namespace triggers the policy to generate
+    the ConfigMap in that namespace.
+    """
+    namespace = "org-test-dynamic"
+    LOGGER.info(f"Creating namespace {namespace}")
+    kube_cluster.kubectl("apply", filename="manifests/test-org-namespace-new.yaml")
+
+    try:
+        LOGGER.info(f"Waiting for {CONFIGMAP_NAME} to appear in {namespace}")
+        cm = wait_for_configmap(kube_cluster, CONFIGMAP_NAME, namespace, timeout_sec=90)
+        assert "testKey" in cm["data"], (
+            f"ConfigMap in {namespace} missing expected data: {cm['data']}"
+        )
+        LOGGER.info(f"ConfigMap {CONFIGMAP_NAME} found in {namespace}")
+    finally:
+        kube_cluster.kubectl(f"delete namespace {namespace}")
+
+
+@pytest.mark.smoke
+def test_configmap_sync_updates_propagate(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks that synchronize:true causes updates to the source ConfigMap in the
+    giantswarm namespace to propagate to generated copies in org namespaces.
+    """
+    LOGGER.info("Patching source ConfigMap in giantswarm namespace")
+    kube_cluster.kubectl(
+        "patch configmap cluster-app-installation-values -n giantswarm"
+        " --type merge -p '{\"data\":{\"syncKey\":\"syncValue\"}}'"
+    )
+
+    namespace = "org-giantswarm"
+    LOGGER.info(f"Waiting for syncKey to propagate to {namespace}")
+    deadline = time.time() + 120
+    propagated = False
+    while time.time() < deadline:
+        try:
+            cm = kube_cluster.kubectl(f"get configmap {CONFIGMAP_NAME} -n {namespace} -o yaml")
+            if cm.get("data", {}).get("syncKey") == "syncValue":
+                propagated = True
+                break
+        except subprocess.CalledProcessError:
+            pass
+        time.sleep(3)
+
+    assert propagated, f"syncKey did not propagate to ConfigMap in {namespace} within 120s"
+    LOGGER.info(f"syncKey successfully propagated to {namespace}")
+
+
+@pytest.mark.smoke
+def test_configmap_not_synced_to_non_org_namespace(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks that the policy does NOT generate the ConfigMap in namespaces whose
+    names do not start with 'org-'.
+    """
+    namespace = "non-org-test"
+    LOGGER.info(f"Creating non-org namespace {namespace}")
+    kube_cluster.kubectl(f"create namespace {namespace}")
+
+    try:
+        time.sleep(15)
+        LOGGER.info(f"Asserting {CONFIGMAP_NAME} was not generated in {namespace}")
+        with pytest.raises(subprocess.CalledProcessError):
+            kube_cluster.kubectl(f"get configmap {CONFIGMAP_NAME} -n {namespace}")
+        LOGGER.info(f"Confirmed: ConfigMap not present in {namespace}")
+    finally:
+        kube_cluster.kubectl(f"delete namespace {namespace}")
