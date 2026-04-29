@@ -105,6 +105,11 @@ def fixtures(kube_cluster: Cluster):
     LOGGER.debug(f"Deployed app {app_name}")
         
 
+    # Create the giantswarm namespace and source ConfigMap that the sync policy clones from
+    LOGGER.info("Create giantswarm namespace and source cluster-app-installation-values ConfigMap")
+    ret = kube_cluster.kubectl("apply", filename="manifests/test-configmap-source.yaml", output_format="json")
+    LOGGER.debug(f"Created giantswarm namespace and source ConfigMap: {ret}")
+
     # Create Organization namespace
     LOGGER.info("Create namespaces named 'org-giantswarm' and 'org-empty'")
     ret = kube_cluster.kubectl("apply", filename="manifests/test-organization.yaml", output_format="json")
@@ -124,6 +129,6 @@ def fixtures(kube_cluster: Cluster):
     ret = kube_cluster.kubectl("apply", filename="manifests/test-cluster.yaml", output_format="json")
     LOGGER.debug(f"Created cluster result: {ret}")
 
-    time.sleep(5)
+    time.sleep(15)
 
     return True

@@ -1,0 +1,63 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:sync-cluster-app-configmap-to-org-namespaces
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sync-cluster-app-configmap-to-org-namespaces
+  labels:
+    application.giantswarm.io/team: honeybadger
+  annotations:
+    policies.kyverno.io/title: Sync 'cluster-app-installation-values' ConfigMap to org namespaces
+    policies.kyverno.io/subject: ConfigMap, Namespace
+    policies.kyverno.io/description: >
+      Copies the cluster-app-installation-values ConfigMap from the giantswarm
+      namespace into every namespace whose name starts with "org-", and keeps
+      all copies in unidirectional sync with the source in the giantswarm namespace.
+spec:
+  generateExisting: true
+  rules:
+    - name: sync-configmap-to-org-namespaces
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              names:
+                - "org-*"
+      generate:
+        apiVersion: v1
+        kind: ConfigMap
+        name: cluster-app-installation-values
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        clone:
+          namespace: giantswarm
+          name: cluster-app-installation-values
