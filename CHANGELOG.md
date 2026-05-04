@@ -7,11 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-01-28
+
+### Changed
+
+- Change policies to use `AnyIn` instead of `In`, as it has been deprecated.
+- Add new `gvk` section to values to specify GVKs without verification to the `block-resource-deletion-if-has-prevent-deletion-label` ClusterPolicy.
+
+## [0.13.1] - 2025-12-12
+
+### Changed
+
+- Migrate build system to ABS.
+- Migrate Chart.yaml annotations to new format as per https://docs.giantswarm.io/reference/platform-api/chart-metadata/
+
+## [0.13.0] - 2025-12-03
+
+### Added
+
+- Add policy to prevent deletion of `KubeadmControlPlane` resources when there are `MachinePools` or `MachineDeployments` belonging to the same cluster.
+- Add policy to prevent deletion of infrastructure cluster resources (only `AWSCluster` for now) when the `KubeadmControlPlane` for the owning cluster still exists.
+
+### Removed
+
+- Remove policies that only applied to `vintage` clusters.
+- Remove logic to conditionally deploy policies to CAPI, because all clusters are CAPI now.
+
+## [0.12.2] - 2025-11-26
+
+### Changed
+
+- Rename `restart-dex-on-secrets-change` policy to `restart-dex-wc-on-secrets-change` to avoid naming conflict with kyverno-policies-dx.
+
+## [0.12.1] - 2025-11-25
+
 ### Added
 
 - Add policy to automatically restart dex deployment when its configuration secret is updated.
-- Added policy to automatically inject the 'cluster-app-installation-values' config map to any App CR that
-  deploys a "cluster-\*" app and doesn't have that CM in its `extraConfigs`
+- Add policy to cleanup teleport-kube-agent state and restart pods on configuration changes.
 
 ### Fixed
 
@@ -187,7 +220,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...v0.13.0
+[0.12.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.1...v0.12.2
+[0.12.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.9.0...v0.10.0

@@ -2,12 +2,11 @@ managementCluster:
   name: ""
 
 provider:
-  kind: ""
+  kind: "capa"
   flavor: capi
 
 preventDeletionLabelPolicy:
   resources:
-    - Cluster
     - MachineDeployment
     - MachinePool
     - AWSCluster
@@ -21,3 +20,5 @@ preventDeletionLabelPolicy:
     - Namespace
     - Secret
     - ConfigMap
+  gvk:
+    - cluster.x-k8s.io/v1beta2/Cluster

@@ -27,7 +27,7 @@ spec:
       preconditions:
         all:
           - key: "{{ `{{` }} request.operation {{ `}}` }}"
-            operator: In
+            operator: AnyIn
             value:
               - DELETE
       validate:
@@ -35,7 +35,7 @@ spec:
         deny:
           conditions:
             - key: "{{ `{{` }}request.operation{{ `}}` }}"
-              operator: In
+              operator: AnyIn
               value:
                 - DELETE
             - key: "{{ `{{` }}clusterCount{{ `}}` }}"

@@ -1,0 +1,49 @@
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test-cp-workers
+  namespace: org-giantswarm
+  labels:
+    release.giantswarm.io/version: 30.1.0
+    giantswarm.io/cluster: test-cp-workers
+    cluster.x-k8s.io/cluster-name: test-cp-workers
+    giantswarm.io/organization: giantswarm
+spec: {}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test-cp-workers
+    giantswarm.io/cluster: test-cp-workers
+    giantswarm.io/organization: giantswarm
+    giantswarm.io/service-priority: highest
+    release.giantswarm.io/version: 33.0.1
+  name: test-cp-workers
+  namespace: org-giantswarm
+spec:
+  kubeadmConfigSpec: {}
+  machineTemplate:
+    infrastructureRef: {}
+  version: "1.33.0"
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachinePool
+metadata:
+  name: test-cp-workers-pool0
+  namespace: org-giantswarm
+  labels:
+    cluster.x-k8s.io/cluster-name: test-cp-workers
+    giantswarm.io/cluster: test-cp-workers
+    giantswarm.io/organization: giantswarm
+spec:
+  clusterName: test-cp-workers
+  template:
+    metadata:
+      labels: {}
+    spec:
+      clusterName: test-cp-workers
+      bootstrap:
+        dataSecretName: test-cp-workers
+      infrastructureRef: {}

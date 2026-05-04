@@ -292,6 +292,65 @@ def test_prevent_release_deletion_when_used_by_clusters(fixtures, kube_cluster: 
     kube_cluster.kubectl("delete cluster test-release")
     kube_cluster.kubectl("delete release aws-30.1.0")
 
+@pytest.mark.smoke
+def test_block_controlplane_deletion_when_still_has_workers(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents deleting KubeadmControlPlane on a cluster that still have workers.
+    """
+    # Setup: create cluster with control plane and workers
+    kube_cluster.kubectl("apply", filename="manifests/test-controlplane-workers.yaml")
+    
+    # Verify resources were created
+    LOGGER.info("Verifying KubeadmControlPlane was created")
+    result = kube_cluster.kubectl("get kubeadmcontrolplane test-cp-workers -n org-giantswarm")
+    LOGGER.info(f"KubeadmControlPlane exists: {result}")
+
+    # Attempt to delete the KubeadmControlPlane - should be prevented
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempt to delete KubeadmControlPlane in a cluster with existing workers")
+        kube_cluster.kubectl(
+            "delete kubeadmcontrolplane test-cp-workers -n org-giantswarm"
+        )
+
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+
+    # Verify the policy blocked it with the correct message
+    assert "block-kubeadmcontrolplane-deletion-if-has-workers" in stderr
+    assert "worker node pools" in stderr
+
+@pytest.mark.smoke
+def test_block_infracluster_deletion_when_has_controlplane(fixtures, kube_cluster: Cluster) -> None:
+    """
+    Checks whether our policy prevents deleting infrastructure cluster (AWSCluster) 
+    when the KubeadmControlPlane still exists.
+    """
+    # Setup: create cluster with infrastructure cluster and control plane
+    kube_cluster.kubectl("apply", filename="manifests/test-infracluster-controlplane.yaml")
+    
+    # Verify resources were created
+    LOGGER.info("Verifying AWSCluster was created")
+    result = kube_cluster.kubectl("get awscluster test-infra-cp -n org-giantswarm")
+    LOGGER.info(f"AWSCluster exists: {result}")
+    
+    LOGGER.info("Verifying KubeadmControlPlane was created")
+    result = kube_cluster.kubectl("get kubeadmcontrolplane test-infra-cp -n org-giantswarm")
+    LOGGER.info(f"KubeadmControlPlane exists: {result}")
+
+    # Attempt to delete the AWSCluster - should be prevented
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        LOGGER.info("Attempt to delete AWSCluster while KubeadmControlPlane still exists")
+        kube_cluster.kubectl(
+            "delete awscluster test-infra-cp -n org-giantswarm"
+        )
+
+    stderr = e.value.stderr
+    LOGGER.info(f"stderr: {stderr}")
+
+    # Verify the policy blocked it with the correct message
+    assert "block-infracluster-deletion-if-has-controlplane" in stderr
+    assert "KubeadmControlPlane" in stderr
+
 # @pytest.mark.smoke
 # def test_block_organization_deletion_when_still_has_clusters(fixtures, kube_cluster: Cluster) -> None:
 #   with pytest.raises(subprocess.CalledProcessError):
