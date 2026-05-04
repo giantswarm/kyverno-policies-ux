@@ -2,8 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -16,25 +16,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Change policies to use `AnyIn` instead of `In`, as it has been deprecated.
-- Add new `gvk` section to values to specify GVKs without verification to the
-  `block-resource-deletion-if-has-prevent-deletion-label` ClusterPolicy.
+- Add new `gvk` section to values to specify GVKs without verification to the `block-resource-deletion-if-has-prevent-deletion-label` ClusterPolicy.
 
 ## [0.13.1] - 2025-12-12
 
 ### Changed
 
 - Migrate build system to ABS.
-- Migrate Chart.yaml annotations to new format as per
-  https://docs.giantswarm.io/reference/platform-api/chart-metadata/
+- Migrate Chart.yaml annotations to new format as per https://docs.giantswarm.io/reference/platform-api/chart-metadata/
 
 ## [0.13.0] - 2025-12-03
 
 ### Added
 
-- Add policy to prevent deletion of `KubeadmControlPlane` resources when there are `MachinePools` or
-  `MachineDeployments` belonging to the same cluster.
-- Add policy to prevent deletion of infrastructure cluster resources (only `AWSCluster` for now) when the
-  `KubeadmControlPlane` for the owning cluster still exists.
+- Add policy to prevent deletion of `KubeadmControlPlane` resources when there are `MachinePools` or `MachineDeployments` belonging to the same cluster.
+- Add policy to prevent deletion of infrastructure cluster resources (only `AWSCluster` for now) when the `KubeadmControlPlane` for the owning cluster still exists.
 
 ### Removed
 
@@ -45,8 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Rename `restart-dex-on-secrets-change` policy to `restart-dex-wc-on-secrets-change` to avoid naming conflict
-  with kyverno-policies-dx.
+- Rename `restart-dex-on-secrets-change` policy to `restart-dex-wc-on-secrets-change` to avoid naming conflict with kyverno-policies-dx.
 
 ## [0.12.1] - 2025-11-25
 
@@ -159,8 +154,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.3.1] - 2023-06-20
 
-- Revert 38: some customer clusters violate the rule that machine deployment names should not start with a
-  number.
+- Revert 38: some customer clusters violate the rule that machine deployment names should not start with a number.
 
 ## [0.3.0] - 2023-06-20
 
@@ -171,8 +165,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Restrict cluster names to 10 characters and forbid them to start with a number.
-- Restrict machine pools and deployments to 21 characters (10 for the cluster name prefix, 1 for a delimiter
-  '-' and 10 for the deployment/pool name itself) and forbid them to start with a number.
+- Restrict machine pools and deployments to 21 characters (10 for the cluster
+  name prefix, 1 for a delimiter '-' and 10 for the deployment/pool name itself)
+  and forbid them to start with a number.
 
 ### Changed
 
@@ -195,8 +190,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Add default value when trying to look up the organization namespace from the organization status field, as
-  this may be empty when the organization was just created.
+- Add default value when trying to look up the organization namespace from the organization status field, as this may be empty when the organization was just created.
 
 ## [0.2.0] - 2023-03-07
 
@@ -217,8 +211,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Validation of `giantswarm.io/service-priority` label values on `clusters.cluster.x-k8s.io/v*/Cluster`
-  resources.
+- Validation of `giantswarm.io/service-priority` label values on `clusters.cluster.x-k8s.io/v*/Cluster` resources.
 
 ### Fixed
 
