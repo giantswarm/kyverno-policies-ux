@@ -60,6 +60,19 @@ spec:
           data:
             installation.name: test-installation
             customer: test-customer
+    catch:
+    - script:
+        content: |
+          echo "=== Policy status ==="
+          kubectl get clusterpolicy sync-cluster-app-configmap-to-org-namespaces -o jsonpath='{.status}' | python3 -m json.tool || true
+          echo "=== UpdateRequests ==="
+          kubectl get updaterequests -A 2>/dev/null || echo "No updaterequests resource"
+          echo "=== Source ConfigMap ==="
+          kubectl get configmap cluster-app-installation-values -n giantswarm -o yaml 2>/dev/null || echo "NOT FOUND"
+          echo "=== Generated ConfigMap ==="
+          kubectl get configmap cluster-app-installation-values -n org-chainsaw-sync-test -o yaml 2>/dev/null || echo "NOT FOUND"
+          echo "=== Kyverno background-controller logs (last 30 lines) ==="
+          kubectl logs -n kyverno -l app.kubernetes.io/component=background-controller --tail=30 2>/dev/null || true
 
   # Update the source ConfigMap — synchronize: true should propagate the change
   - name: update-source-configmap
