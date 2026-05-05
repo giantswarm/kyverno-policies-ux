@@ -1,0 +1,147 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: sync-cluster-app-configmap-to-org-namespaces
+spec:
+  steps:
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: sync-cluster-app-configmap-to-org-namespaces
+
+  # Ensure giantswarm namespace exists (apply is idempotent)
+  - name: ensure-giantswarm-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: giantswarm
+
+  # Create source ConfigMap in the giantswarm namespace
+  - name: create-source-configmap
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cluster-app-installation-values
+            namespace: giantswarm
+          data:
+            installation.name: test-installation
+            customer: test-customer
+
+  # Create an org-* namespace — policy should generate the ConfigMap there
+  - name: create-org-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: org-chainsaw-sync-test
+
+  # Assert the ConfigMap was cloned into the org namespace
+  - name: assert-configmap-generated-in-org-namespace
+    try:
+    - assert:
+        timeout: 60s
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cluster-app-installation-values
+            namespace: org-chainsaw-sync-test
+          data:
+            installation.name: test-installation
+            customer: test-customer
+
+  # Update the source ConfigMap — synchronize: true should propagate the change
+  - name: update-source-configmap
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cluster-app-installation-values
+            namespace: giantswarm
+          data:
+            installation.name: test-installation
+            customer: test-customer
+            new-field: synced-value
+
+  # Assert the update propagated to the org namespace
+  - name: assert-update-synced-to-org-namespace
+    try:
+    - assert:
+        timeout: 60s
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cluster-app-installation-values
+            namespace: org-chainsaw-sync-test
+          data:
+            installation.name: test-installation
+            customer: test-customer
+            new-field: synced-value
+
+  # Delete the generated ConfigMap from the org namespace — synchronize: true should recreate it
+  - name: delete-generated-configmap-in-org-namespace
+    try:
+    - script:
+        content: kubectl delete configmap cluster-app-installation-values -n org-chainsaw-sync-test
+
+  # Assert the ConfigMap is recreated after deletion
+  - name: assert-configmap-recreated-after-deletion
+    try:
+    - assert:
+        timeout: 60s
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cluster-app-installation-values
+            namespace: org-chainsaw-sync-test
+
+  # Create a namespace without org- prefix — policy must NOT generate the ConfigMap there
+  - name: create-non-org-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: non-org-chainsaw-test
+
+  # Wait long enough for Kyverno to have processed the namespace if it were going to
+  - name: wait-for-kyverno-non-org-processing
+    try:
+    - script:
+        content: sleep 15
+
+  # Assert ConfigMap is absent in the non-org namespace
+  - name: assert-no-configmap-in-non-org-namespace
+    try:
+    - script:
+        content: |
+          if kubectl get configmap cluster-app-installation-values -n non-org-chainsaw-test 2>/dev/null; then
+            echo "ERROR: ConfigMap must not be generated in a non-org namespace"
+            exit 1
+          fi
+          echo "OK: ConfigMap not found in non-org namespace as expected"
+
+  # Cleanup cluster-scoped and cross-namespace resources Chainsaw cannot auto-remove
+  - name: cleanup-external-resources
+    try:
+    - script:
+        content: |
+          kubectl delete namespace org-chainsaw-sync-test --ignore-not-found=true
+          kubectl delete namespace non-org-chainsaw-test --ignore-not-found=true
+          kubectl delete configmap cluster-app-installation-values -n giantswarm --ignore-not-found=true
