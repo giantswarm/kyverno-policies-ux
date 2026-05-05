@@ -62,6 +62,7 @@ spec:
             customer: test-customer
     catch:
     - script:
+        timeout: 30s
         content: |
           echo "=== Policy status ==="
           kubectl get clusterpolicy sync-cluster-app-configmap-to-org-namespaces -o jsonpath='{.status}' | python3 -m json.tool || true
@@ -109,6 +110,7 @@ spec:
   - name: delete-generated-configmap-in-org-namespace
     try:
     - script:
+        timeout: 15s
         content: kubectl delete configmap cluster-app-installation-values -n org-chainsaw-sync-test
 
   # Assert the ConfigMap is recreated after deletion
@@ -137,12 +139,14 @@ spec:
   - name: wait-for-kyverno-non-org-processing
     try:
     - script:
-        content: sleep 15
+        timeout: 20s
+        content: sleep 10
 
   # Assert ConfigMap is absent in the non-org namespace
   - name: assert-no-configmap-in-non-org-namespace
     try:
     - script:
+        timeout: 15s
         content: |
           if kubectl get configmap cluster-app-installation-values -n non-org-chainsaw-test 2>/dev/null; then
             echo "ERROR: ConfigMap must not be generated in a non-org namespace"
@@ -154,6 +158,7 @@ spec:
   - name: cleanup-external-resources
     try:
     - script:
+        timeout: 60s
         content: |
           kubectl delete namespace org-chainsaw-sync-test --ignore-not-found=true
           kubectl delete namespace non-org-chainsaw-test --ignore-not-found=true
