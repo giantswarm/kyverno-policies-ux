@@ -15,6 +15,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-p
 # Release CRD from giantswarm/releases
 kubectl apply -f https://raw.githubusercontent.com/giantswarm/releases/master/sdk/config/crd/bases/release.giantswarm.io_releases.yaml
 
+# App CRD from giantswarm/apiextensions-application (used by prepend-cluster-app-config-map)
+kubectl apply -f https://raw.githubusercontent.com/giantswarm/apiextensions-application/refs/heads/main/config/crd/v1/application.giantswarm.io_apps.yaml
+
 # Organization CRD without status subresource so tests can set status.namespace via regular apply
 kubectl apply -f - <<'EOF'
 apiVersion: apiextensions.k8s.io/v1

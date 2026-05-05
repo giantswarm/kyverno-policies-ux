@@ -34,10 +34,12 @@ metadata:
       Checks if the 'cluster-app-installation-values' ConfigMap is in the extraConfigs list of a cluster-* App
       CR, and if not, prepends it as the first entry.
 spec:
-  validationFailureAction: Enforce
   background: true
   rules:
-    - name: check-and-add-cluster-app-config
+    # Rule 1: extraConfigs is absent (null) — create the field with the entry as the only element.
+    # JSON Patch op:add at a numeric index requires the parent array to already exist, so we
+    # must initialise it in a separate rule rather than patching at /spec/extraConfigs/0.
+    - name: init-extraconfigs-list
       match:
         any:
           - resources:
@@ -45,11 +47,6 @@ spec:
                 - App
       preconditions:
         all:
-          - key:
-              "{{ request.object.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-              namespace=='giantswarm'] | length(@) }}"
-            operator: Equals
-            value: "0"
           - key: "{{ request.object.spec.name }}"
             operator: AnyIn
             value:
@@ -58,6 +55,9 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
+          - key: "{{ request.object.spec.extraConfigs }}"
+            operator: Equals
+            value: null
       mutate:
         # disable the following 2 attributes to disable mutation of already existing Apps
         mutateExistingOnPolicyUpdate: true
@@ -66,11 +66,6 @@ spec:
             kind: App
             preconditions:
               all:
-                - key:
-                    "{{ target.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-                    namespace=='giantswarm'] | length(@) }}"
-                  operator: Equals
-                  value: "0"
                 - key: "{{ target.spec.name }}"
                   operator: AnyIn
                   value:
@@ -79,6 +74,68 @@ spec:
                     - cluster-cloud-director
                     - cluster-vsphere
                     - cluster-eks
+                - key: "{{ target.spec.extraConfigs }}"
+                  operator: Equals
+                  value: null
+        # end
+        patchesJson6902: |-
+          - op: add
+            path: /spec/extraConfigs
+            value:
+              - kind: configMap
+                name: cluster-app-installation-values
+                namespace: giantswarm
+                priority: 10
+
+    # Rule 2: extraConfigs exists (possibly empty []) but does not yet contain the entry — prepend.
+    - name: prepend-to-extraconfigs-list
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.name }}"
+            operator: AnyIn
+            value:
+              - cluster-aws
+              - cluster-azure
+              - cluster-cloud-director
+              - cluster-vsphere
+              - cluster-eks
+          - key: "{{ request.object.spec.extraConfigs }}"
+            operator: NotEquals
+            value: null
+          - key:
+              "{{ request.object.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
+              namespace=='giantswarm'] | length(@) }}"
+            operator: Equals
+            value: "0"
+      mutate:
+        # disable the following 2 attributes to disable mutation of already existing Apps
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key: "{{ target.spec.name }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+                    - cluster-eks
+                - key: "{{ target.spec.extraConfigs }}"
+                  operator: NotEquals
+                  value: null
+                - key:
+                    "{{ target.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
+                    namespace=='giantswarm'] | length(@) }}"
+                  operator: Equals
+                  value: "0"
         # end
         patchesJson6902: |-
           - op: add
