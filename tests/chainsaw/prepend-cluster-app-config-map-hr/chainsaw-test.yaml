@@ -1,0 +1,268 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: prepend-cluster-app-config-map-hr
+spec:
+  steps:
+  - name: install-helmrelease-crd
+    try:
+    - script:
+        content: |
+          if kubectl get crd helmreleases.helm.toolkit.fluxcd.io &>/dev/null; then
+            echo "HelmRelease CRD already exists, skipping"
+            exit 0
+          fi
+          kubectl apply -f - <<'EOF'
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: helmreleases.helm.toolkit.fluxcd.io
+          spec:
+            group: helm.toolkit.fluxcd.io
+            names:
+              kind: HelmRelease
+              listKind: HelmReleaseList
+              plural: helmreleases
+              singular: helmrelease
+              shortNames:
+              - hr
+            scope: Namespaced
+            versions:
+            - name: v2
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+          EOF
+
+  - name: check-policy-ready
+    use:
+      template: ../_steps-templates/cluster-policy-ready.yaml
+      with:
+        bindings:
+        - name: name
+          value: prepend-cluster-app-config-map-hr
+
+  - name: create-org-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: org-chainsaw-prepend-hr
+
+  # HR with no spec.valuesFrom — ConfigMap must be added as the only entry
+  - name: prepend-when-valuesFrom-missing
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-no-values-from
+            namespace: org-chainsaw-prepend-hr
+            labels:
+              app-type: cluster
+          spec:
+            interval: 10m
+            chart:
+              spec:
+                chart: test-chart
+                version: ">=0.0.0-0"
+                sourceRef:
+                  kind: HelmRepository
+                  name: test-repo
+    - assert:
+        timeout: 30s
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-no-values-from
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            valuesFrom:
+            - kind: ConfigMap
+              name: cluster-app-installation-values
+    - script:
+        content: |
+          first=$(kubectl get helmrelease hr-no-values-from -n org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom[0].name}')
+          if [ "$first" != "cluster-app-installation-values" ]; then
+            echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
+            exit 1
+          fi
+          echo "OK: cluster-app-installation-values is at index 0"
+
+  # HR with existing entries in valuesFrom — ConfigMap must be inserted at index 0
+  - name: prepend-before-existing-valuesFrom-entries
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-with-other-values
+            namespace: org-chainsaw-prepend-hr
+            labels:
+              app-type: cluster
+          spec:
+            interval: 10m
+            chart:
+              spec:
+                chart: test-chart
+                version: ">=0.0.0-0"
+                sourceRef:
+                  kind: HelmRepository
+                  name: test-repo
+            valuesFrom:
+            - kind: ConfigMap
+              name: other-config
+    - assert:
+        timeout: 30s
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-with-other-values
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            valuesFrom:
+            - kind: ConfigMap
+              name: cluster-app-installation-values
+            - kind: ConfigMap
+              name: other-config
+    - script:
+        content: |
+          first=$(kubectl get helmrelease hr-with-other-values -n org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom[0].name}')
+          second=$(kubectl get helmrelease hr-with-other-values -n org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom[1].name}')
+          if [ "$first" != "cluster-app-installation-values" ]; then
+            echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
+            exit 1
+          fi
+          if [ "$second" != "other-config" ]; then
+            echo "ERROR: expected other-config at index 1, got: $second"
+            exit 1
+          fi
+          echo "OK: cluster-app-installation-values at index 0, other-config at index 1"
+
+  # HR that already has the ConfigMap in valuesFrom — must not be mutated (no duplication)
+  - name: no-mutation-when-configmap-already-present
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-already-has-configmap
+            namespace: org-chainsaw-prepend-hr
+            labels:
+              app-type: cluster
+          spec:
+            interval: 10m
+            chart:
+              spec:
+                chart: test-chart
+                version: ">=0.0.0-0"
+                sourceRef:
+                  kind: HelmRepository
+                  name: test-repo
+            valuesFrom:
+            - kind: ConfigMap
+              name: cluster-app-installation-values
+            - kind: ConfigMap
+              name: other-config
+    - script:
+        # Wait to give the background controller time to act (if it mistakenly would)
+        content: |
+          sleep 10
+          count=$(kubectl get helmrelease hr-already-has-configmap -n org-chainsaw-prepend-hr \
+            -o jsonpath='{range .spec.valuesFrom[*]}{.name}{"\n"}{end}' \
+            | grep -c "^cluster-app-installation-values$" || true)
+          if [ "$count" != "1" ]; then
+            echo "ERROR: expected exactly 1 cluster-app-installation-values entry, got: $count"
+            exit 1
+          fi
+          echo "OK: no duplication — exactly 1 cluster-app-installation-values entry"
+
+  # HR in a non-org-* namespace — must not be mutated
+  - name: no-mutation-outside-org-namespace
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: non-org-chainsaw-prepend-hr
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-non-org
+            namespace: non-org-chainsaw-prepend-hr
+            labels:
+              app-type: cluster
+          spec:
+            interval: 10m
+            chart:
+              spec:
+                chart: test-chart
+                version: ">=0.0.0-0"
+                sourceRef:
+                  kind: HelmRepository
+                  name: test-repo
+    - script:
+        content: |
+          sleep 10
+          values_from=$(kubectl get helmrelease hr-non-org -n non-org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
+          if echo "$values_from" | grep -q "cluster-app-installation-values"; then
+            echo "ERROR: ConfigMap was added to HR in non-org namespace"
+            exit 1
+          fi
+          echo "OK: no mutation for HR in non-org namespace"
+
+  # HR in org-* namespace but without the app-type: cluster label — must not be mutated
+  - name: no-mutation-without-cluster-label
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-no-cluster-label
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            interval: 10m
+            chart:
+              spec:
+                chart: test-chart
+                version: ">=0.0.0-0"
+                sourceRef:
+                  kind: HelmRepository
+                  name: test-repo
+    - script:
+        content: |
+          sleep 10
+          values_from=$(kubectl get helmrelease hr-no-cluster-label -n org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
+          if echo "$values_from" | grep -q "cluster-app-installation-values"; then
+            echo "ERROR: ConfigMap was added to HR without app-type: cluster label"
+            exit 1
+          fi
+          echo "OK: no mutation for HR without app-type: cluster label"
+
+  - name: cleanup-external-resources
+    try:
+    - script:
+        content: |
+          kubectl delete namespace org-chainsaw-prepend-hr --ignore-not-found=true
+          kubectl delete namespace non-org-chainsaw-prepend-hr --ignore-not-found=true

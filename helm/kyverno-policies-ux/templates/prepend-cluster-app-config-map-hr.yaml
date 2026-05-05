@@ -1,0 +1,84 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:prepend-cluster-app-config-map-hr
+rules:
+  - apiGroups:
+      - helm.toolkit.fluxcd.io
+    resources:
+      - helmreleases
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prepend-cluster-app-config-map-hr
+  labels:
+    application.giantswarm.io/team: honeybadger
+  annotations:
+    policies.kyverno.io/title: >-
+      Prepend 'cluster-app-installation-values' ConfigMap to HelmRelease valuesFrom for cluster HelmReleases
+    policies.kyverno.io/subject: HelmRelease
+    policies.kyverno.io/description: >
+      Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
+      HelmRelease with the 'app-type: cluster' label in an org-* namespace, and if not, prepends it
+      as the first entry.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-and-add-cluster-app-config-hr
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+              namespaces:
+                - "org-*"
+              selector:
+                matchLabels:
+                  app-type: cluster
+      preconditions:
+        all:
+          - key:
+              "{{ `{{` }} request.object.spec.valuesFrom || `[]` | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
+            operator: Equals
+            value: "0"
+      mutate:
+        # disable the following 2 attributes to disable mutation of already existing HelmReleases
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            selector:
+              matchLabels:
+                app-type: cluster
+            preconditions:
+              all:
+                - key:
+                    "{{ `{{` }} target.spec.valuesFrom || `[]` | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "0"
+                - key: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - "org-*"
+        # end
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/valuesFrom/0
+            value:
+              kind: ConfigMap
+              name: cluster-app-installation-values
