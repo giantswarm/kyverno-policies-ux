@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-05-06
+
 - Add new `sync-cluster-app-configmap-to-org-namespaces` ClusterPolicy to copy the CM to all `org-ns`
   namespaces, to make it available for cluster apps to mount it as a volume and use it as a source of
   configuration for cluster components.
@@ -224,7 +226,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.12.2...v0.13.0
