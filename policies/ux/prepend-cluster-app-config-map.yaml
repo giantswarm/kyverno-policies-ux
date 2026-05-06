@@ -57,7 +57,7 @@ spec:
               - cluster-eks
           - key: "{{ request.object.spec.extraConfigs }}"
             operator: Equals
-            value: null
+            value: "null"
       mutate:
         # disable the following 2 attributes to disable mutation of already existing Apps
         mutateExistingOnPolicyUpdate: true
@@ -76,7 +76,7 @@ spec:
                     - cluster-eks
                 - key: "{{ target.spec.extraConfigs }}"
                   operator: Equals
-                  value: null
+                  value: "null"
         # end
         patchesJson6902: |-
           - op: add
@@ -106,7 +106,7 @@ spec:
               - cluster-eks
           - key: "{{ request.object.spec.extraConfigs }}"
             operator: NotEquals
-            value: null
+            value: "null"
           - key:
               "{{ request.object.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
               namespace=='giantswarm'] | length(@) }}"
@@ -130,7 +130,7 @@ spec:
                     - cluster-eks
                 - key: "{{ target.spec.extraConfigs }}"
                   operator: NotEquals
-                  value: null
+                  value: "null"
                 - key:
                     "{{ target.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
                     namespace=='giantswarm'] | length(@) }}"
