@@ -17,6 +17,23 @@ kubectl apply -f https://raw.githubusercontent.com/giantswarm/releases/master/sd
 
 # App CRD from giantswarm/apiextensions-application (used by prepend-cluster-app-config-map)
 kubectl apply -f https://raw.githubusercontent.com/giantswarm/apiextensions-application/refs/heads/main/config/crd/v1/application.giantswarm.io_apps.yaml
+# Create giantswarm namespace and source ConfigMap so they exist before the policy is installed.
+# The sync-cluster-app-configmap-to-org-namespaces policy uses clone+sync which requires the
+# source to be present at policy-apply time for Kyverno to set up its internal watch correctly.
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: giantswarm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-app-installation-values
+  namespace: giantswarm
+data:
+  placeholder: "true"
+EOF
 
 # Organization CRD without status subresource so tests can set status.namespace via regular apply
 kubectl apply -f - <<'EOF'
