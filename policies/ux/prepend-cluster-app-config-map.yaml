@@ -55,29 +55,10 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
-          - key: "{{ request.object.spec.extraConfigs }}"
+          - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: Equals
             value: "null"
       mutate:
-        # disable the following 2 attributes to disable mutation of already existing Apps
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: application.giantswarm.io/v1alpha1
-            kind: App
-            preconditions:
-              all:
-                - key: "{{ target.spec.name }}"
-                  operator: AnyIn
-                  value:
-                    - cluster-aws
-                    - cluster-azure
-                    - cluster-cloud-director
-                    - cluster-vsphere
-                    - cluster-eks
-                - key: "{{ target.spec.extraConfigs }}"
-                  operator: Equals
-                  value: "null"
-        # end
         patchesJson6902: |-
           - op: add
             path: /spec/extraConfigs
@@ -104,7 +85,7 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
-          - key: "{{ request.object.spec.extraConfigs }}"
+          - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: NotEquals
             value: "null"
           - key:
@@ -113,30 +94,6 @@ spec:
             operator: Equals
             value: "0"
       mutate:
-        # disable the following 2 attributes to disable mutation of already existing Apps
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: application.giantswarm.io/v1alpha1
-            kind: App
-            preconditions:
-              all:
-                - key: "{{ target.spec.name }}"
-                  operator: AnyIn
-                  value:
-                    - cluster-aws
-                    - cluster-azure
-                    - cluster-cloud-director
-                    - cluster-vsphere
-                    - cluster-eks
-                - key: "{{ target.spec.extraConfigs }}"
-                  operator: NotEquals
-                  value: "null"
-                - key:
-                    "{{ target.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
-                    namespace=='giantswarm'] | length(@) }}"
-                  operator: Equals
-                  value: "0"
-        # end
         patchesJson6902: |-
           - op: add
             # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
