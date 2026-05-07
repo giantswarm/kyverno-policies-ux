@@ -7,6 +7,7 @@ spec:
   - name: install-app-crd
     try:
     - script:
+        timeout: 30s
         content: |
           if kubectl get crd apps.application.giantswarm.io &>/dev/null; then
             echo "App CRD already exists, skipping"
@@ -70,17 +71,23 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
               priority: 10
     - script:
+        timeout: 10s
         content: |
           first=$(kubectl get app app-no-extra-configs -n "$NAMESPACE" \
             -o jsonpath='{.spec.extraConfigs[0].name}')
+          first_ns=$(kubectl get app app-no-extra-configs -n "$NAMESPACE" \
+            -o jsonpath='{.spec.extraConfigs[0].namespace}')
           if [ "$first" != "cluster-app-installation-values" ]; then
             echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
             exit 1
           fi
-          echo "OK: cluster-app-installation-values is at index 0"
+          if [ "$first_ns" != "$NAMESPACE" ]; then
+            echo "ERROR: expected injected namespace=$NAMESPACE, got: $first_ns"
+            exit 1
+          fi
+          echo "OK: cluster-app-installation-values at index 0, namespace=$first_ns"
 
   # App with spec.name=cluster-azure and extraConfigs: [] — prepend-to-extraconfigs-list rule must fire
   - name: prepend-when-extraConfigs-empty-list
@@ -108,17 +115,17 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
               priority: 10
     - script:
+        timeout: 10s
         content: |
-          first=$(kubectl get app app-empty-extra-configs -n "$NAMESPACE" \
-            -o jsonpath='{.spec.extraConfigs[0].name}')
-          if [ "$first" != "cluster-app-installation-values" ]; then
-            echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
+          first_ns=$(kubectl get app app-empty-extra-configs -n "$NAMESPACE" \
+            -o jsonpath='{.spec.extraConfigs[0].namespace}')
+          if [ "$first_ns" != "$NAMESPACE" ]; then
+            echo "ERROR: expected injected namespace=$NAMESPACE, got: $first_ns"
             exit 1
           fi
-          echo "OK: cluster-app-installation-values is at index 0"
+          echo "OK: injected namespace matches App namespace: $first_ns"
 
   # App with spec.name=cluster-cloud-director and existing extraConfigs — ConfigMap must be at index 0
   - name: prepend-before-existing-extraConfigs
@@ -137,7 +144,7 @@ spec:
             extraConfigs:
             - kind: configMap
               name: other-values
-              namespace: giantswarm
+              namespace: some-ns
               priority: 25
     - assert:
         timeout: 30s
@@ -150,37 +157,47 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
               priority: 10
             - kind: configMap
               name: other-values
-              namespace: giantswarm
+              namespace: some-ns
               priority: 25
     - script:
+        timeout: 10s
         content: |
           first=$(kubectl get app app-with-existing-configs -n "$NAMESPACE" \
             -o jsonpath='{.spec.extraConfigs[0].name}')
+          first_ns=$(kubectl get app app-with-existing-configs -n "$NAMESPACE" \
+            -o jsonpath='{.spec.extraConfigs[0].namespace}')
           second=$(kubectl get app app-with-existing-configs -n "$NAMESPACE" \
             -o jsonpath='{.spec.extraConfigs[1].name}')
           if [ "$first" != "cluster-app-installation-values" ]; then
             echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
             exit 1
           fi
+          if [ "$first_ns" != "$NAMESPACE" ]; then
+            echo "ERROR: expected injected namespace=$NAMESPACE, got: $first_ns"
+            exit 1
+          fi
           if [ "$second" != "other-values" ]; then
             echo "ERROR: expected other-values at index 1, got: $second"
             exit 1
           fi
-          echo "OK: cluster-app-installation-values at index 0, other-values at index 1"
+          echo "OK: cluster-app-installation-values at [0] (ns=$first_ns), other-values at [1]"
 
-  # App with spec.name=cluster-aws with ConfigMap already present — must not be mutated / no duplication
+  # App with spec.name=cluster-aws with the entry already present — must not be mutated / no duplication
+  # The entry is applied with the App's own namespace (matching the policy's new behavior).
   - name: no-mutation-when-configmap-already-present
     try:
-    - apply:
-        resource:
+    - script:
+        timeout: 15s
+        content: |
+          kubectl apply -f - <<EOF
           apiVersion: application.giantswarm.io/v1alpha1
           kind: App
           metadata:
             name: app-already-has-configmap
+            namespace: $NAMESPACE
           spec:
             name: cluster-aws
             namespace: test-ns
@@ -189,15 +206,16 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
+              namespace: $NAMESPACE
               priority: 10
             - kind: configMap
               name: other-values
-              namespace: giantswarm
+              namespace: some-ns
               priority: 25
+          EOF
     - script:
+        timeout: 10s
         content: |
-          sleep 10
           count=$(kubectl get app app-already-has-configmap -n "$NAMESPACE" \
             -o jsonpath='{range .spec.extraConfigs[*]}{.name}{"\n"}{end}' \
             | grep -c "^cluster-app-installation-values$" || true)
@@ -222,8 +240,8 @@ spec:
             version: 1.0.0
             catalog: giantswarm
     - script:
+        timeout: 10s
         content: |
-          sleep 10
           extra_configs=$(kubectl get app app-not-cluster-type -n "$NAMESPACE" \
             -o jsonpath='{.spec.extraConfigs}' 2>/dev/null || echo "")
           if echo "$extra_configs" | grep -q "cluster-app-installation-values"; then
@@ -257,19 +275,19 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
               priority: 10
     - script:
+        timeout: 10s
         content: |
-          first=$(kubectl get app app-cluster-eks -n "$NAMESPACE" \
-            -o jsonpath='{.spec.extraConfigs[0].name}')
-          if [ "$first" != "cluster-app-installation-values" ]; then
-            echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
+          first_ns=$(kubectl get app app-cluster-eks -n "$NAMESPACE" \
+            -o jsonpath='{.spec.extraConfigs[0].namespace}')
+          if [ "$first_ns" != "$NAMESPACE" ]; then
+            echo "ERROR: expected injected namespace=$NAMESPACE, got: $first_ns"
             exit 1
           fi
-          echo "OK: cluster-app-installation-values prepended for cluster-eks"
+          echo "OK: cluster-app-installation-values prepended for cluster-eks with namespace=$first_ns"
 
-  # App with spec.name=cluster-vsphere — verify remaining two providers
+  # App with spec.name=cluster-vsphere — verify remaining provider
   - name: prepend-for-cluster-vsphere
     try:
     - apply:
@@ -294,14 +312,14 @@ spec:
             extraConfigs:
             - kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
               priority: 10
     - script:
+        timeout: 10s
         content: |
-          first=$(kubectl get app app-cluster-vsphere -n "$NAMESPACE" \
-            -o jsonpath='{.spec.extraConfigs[0].name}')
-          if [ "$first" != "cluster-app-installation-values" ]; then
-            echo "ERROR: expected cluster-app-installation-values at index 0, got: $first"
+          first_ns=$(kubectl get app app-cluster-vsphere -n "$NAMESPACE" \
+            -o jsonpath='{.spec.extraConfigs[0].namespace}')
+          if [ "$first_ns" != "$NAMESPACE" ]; then
+            echo "ERROR: expected injected namespace=$NAMESPACE, got: $first_ns"
             exit 1
           fi
-          echo "OK: cluster-app-installation-values prepended for cluster-vsphere"
+          echo "OK: cluster-app-installation-values prepended for cluster-vsphere with namespace=$first_ns"

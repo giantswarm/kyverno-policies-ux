@@ -66,7 +66,7 @@ spec:
             value:
               - kind: configMap
                 name: cluster-app-installation-values
-                namespace: giantswarm
+                namespace: "{{ `{{` }} request.object.metadata.namespace {{ `}}` }}"
                 priority: 10
 
     # Rule 2: extraConfigs exists (possibly empty []) but does not yet contain the entry — prepend.
@@ -90,8 +90,7 @@ spec:
             operator: NotEquals
             value: "null"
           - key:
-              "{{ `{{` }} request.object.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
-              namespace=='giantswarm'] | length(@) {{ `}}` }}"
+              "{{ `{{` }} request.object.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) {{ `}}` }}"
             operator: Equals
             value: "0"
       mutate:
@@ -102,5 +101,5 @@ spec:
             value:
               kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
+              namespace: "{{ `{{` }} request.object.metadata.namespace {{ `}}` }}"
               priority: 10

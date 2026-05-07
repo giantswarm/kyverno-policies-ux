@@ -55,6 +55,7 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
+              - hello-world-app
           - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: Equals
             value: "null"
@@ -65,7 +66,7 @@ spec:
             value:
               - kind: configMap
                 name: cluster-app-installation-values
-                namespace: giantswarm
+                namespace: "{{ request.object.metadata.namespace }}"
                 priority: 10
 
     # Rule 2: extraConfigs exists (possibly empty []) but does not yet contain the entry — prepend.
@@ -85,12 +86,12 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
+              - hello-world-app
           - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: NotEquals
             value: "null"
           - key:
-              "{{ request.object.spec.extraConfigs | [?name=='cluster-app-installation-values' &&
-              namespace=='giantswarm'] | length(@) }}"
+              "{{ request.object.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) }}"
             operator: Equals
             value: "0"
       mutate:
@@ -101,5 +102,5 @@ spec:
             value:
               kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
+              namespace: "{{ request.object.metadata.namespace }}"
               priority: 10
