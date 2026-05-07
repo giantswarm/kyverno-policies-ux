@@ -8,24 +8,24 @@ jobs:
     docker:
     - image: cimg/base:2026.04
     steps:
-      - checkout
-      - run:
-          name: Install Make
-          command: |
-            sudo apt-get update && sudo apt-get install make
-      - run:
-          name: Make verify
-          command: |
-            make verify
+    - checkout
+    - run:
+        name: Install Make
+        command: |
+          sudo apt-get update && sudo apt-get install make
+    - run:
+        name: Make verify
+        command: |
+          make verify
 
 workflows:
   workflow:
     jobs:
-      - verify:
+    - verify:
           # Needed to trigger job also on git tag.
-          filters:
-            tags:
-              only: /^v.*/
+        filters:
+          tags:
+            only: /^v.*/
 
     - architect/push-to-app-catalog:
         name: push-kyverno-policies-ux-to-catalog
