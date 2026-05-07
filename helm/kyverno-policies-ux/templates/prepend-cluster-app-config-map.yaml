@@ -108,11 +108,18 @@ spec:
     # Fires on policy create/update (mutateExistingOnPolicyUpdate) so existing Apps
     # receive the entry without needing a touch/re-apply.
     - name: init-extraconfigs-list-backfill
+      # match must be present but must never fire via admission — mutateExistingOnPolicyUpdate
+      # is independent of match and fires on policy create/update regardless. Using a label
+      # selector that no real App has prevents the admission webhook from evaluating
+      # targets.preconditions (which use target.* variables unavailable at admission time).
       match:
-        any:
+        all:
           - resources:
               kinds:
                 - App
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -143,10 +150,13 @@ spec:
     # Rule 4: Backfill — extraConfigs exists but missing entry on Apps that pre-date the policy.
     - name: prepend-to-extraconfigs-list-backfill
       match:
-        any:
+        all:
           - resources:
               kinds:
                 - App
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
