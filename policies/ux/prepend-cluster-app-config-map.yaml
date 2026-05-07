@@ -55,7 +55,6 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
-              - hello-world-app
           - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: Equals
             value: "null"
@@ -86,7 +85,6 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
-              - hello-world-app
           - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
             operator: NotEquals
             value: "null"
@@ -129,7 +127,6 @@ spec:
                     - cluster-cloud-director
                     - cluster-vsphere
                     - cluster-eks
-                    - hello-world-app
                 - key: "{{ target.spec.extraConfigs | to_string(@) }}"
                   operator: Equals
                   value: "null"
@@ -164,7 +161,6 @@ spec:
                     - cluster-cloud-director
                     - cluster-vsphere
                     - cluster-eks
-                    - hello-world-app
                 - key: "{{ target.spec.extraConfigs | to_string(@) }}"
                   operator: NotEquals
                   value: "null"
