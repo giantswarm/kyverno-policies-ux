@@ -120,6 +120,9 @@ spec:
               selector:
                 matchLabels:
                   kyverno.io/backfill-trigger: "true"
+      # Must be false: Kyverno defaults skipBackgroundRequests=true for mutate rules, which
+      # would block mutateExistingOnPolicyUpdate (a background-mode trigger) from ever running.
+      skipBackgroundRequests: false
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -157,6 +160,7 @@ spec:
               selector:
                 matchLabels:
                   kyverno.io/backfill-trigger: "true"
+      skipBackgroundRequests: false
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
