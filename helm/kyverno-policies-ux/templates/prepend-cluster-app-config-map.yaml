@@ -108,3 +108,83 @@ spec:
               name: cluster-app-installation-values
               namespace: "{{ `{{` }} request.object.metadata.namespace {{ `}}` }}"
               priority: 10
+
+    # Rule 3: Immediate backfill on policy create/update — extraConfigs absent.
+    # mutateExistingOnPolicyUpdate fires as soon as the policy lands on the cluster;
+    # the background controller patches all qualifying Apps without waiting for a
+    # periodic background scan.  target.* variables are only evaluated in background
+    # mode (not at admission time), so no admission-webhook errors occur.
+    - name: init-extraconfigs-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      # skipBackgroundRequests: false is required so the background controller
+      # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
+      skipBackgroundRequests: false
+      mutate:
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key: "{{ `{{` }} target.spec.name {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+                    - cluster-eks
+                - key: "{{ `{{` }} target.spec.extraConfigs | to_string(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "null"
+        patchesJson6902: |-
+          - op: add
+            path: /spec/extraConfigs
+            value:
+              - kind: configMap
+                name: cluster-app-installation-values
+                namespace: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+                priority: 10
+
+    # Rule 4: Immediate backfill on policy create/update — extraConfigs exists but entry missing.
+    - name: prepend-to-extraconfigs-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      skipBackgroundRequests: false
+      mutate:
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key: "{{ `{{` }} target.spec.name {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+                    - cluster-eks
+                - key: "{{ `{{` }} target.spec.extraConfigs | to_string(@) {{ `}}` }}"
+                  operator: NotEquals
+                  value: "null"
+                - key:
+                    "{{ `{{` }} target.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "0"
+        patchesJson6902: |-
+          - op: add
+            path: /spec/extraConfigs/0
+            value:
+              kind: configMap
+              name: cluster-app-installation-values
+              namespace: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+              priority: 10
