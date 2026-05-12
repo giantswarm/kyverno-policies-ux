@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add new `sync-cluster-app-configmap-to-org-namespaces` ClusterPolicy to copy the CM to all `org-ns`
+  namespaces, to make it available for cluster apps to mount it as a volume and use it as a source of
+  configuration for cluster components.
+
 ## [0.13.2] - 2026-01-28
 
 ### Changed

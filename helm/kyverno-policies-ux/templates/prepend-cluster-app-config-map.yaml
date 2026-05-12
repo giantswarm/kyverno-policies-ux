@@ -35,22 +35,22 @@ metadata:
       Checks if the 'cluster-app-installation-values' ConfigMap is in the extraConfigs list of a cluster-* App
       CR, and if not, prepends it as the first entry.
 spec:
-  validationFailureAction: Enforce
   background: true
   rules:
-    - name: check-and-add-cluster-app-config
+    # Rule 1: extraConfigs is absent (null) — create the field with the entry as the only element.
+    # JSON Patch op:add at a numeric index requires the parent array to already exist, so we
+    # must initialise it in a separate rule rather than patching at /spec/extraConfigs/0.
+    - name: init-extraconfigs-list
       match:
         any:
           - resources:
               kinds:
                 - App
+      # Also run during periodic background scans so pre-existing Apps without
+      # extraConfigs are backfilled automatically (no manual touch required).
+      skipBackgroundRequests: false
       preconditions:
         all:
-          - key:
-              "{{ `{{` }} request.object.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-              namespace=='giantswarm'] | length(@) {{ `}}` }}"
-            operator: Equals
-            value: "0"
           - key: "{{ `{{` }} request.object.spec.name {{ `}}` }}"
             operator: AnyIn
             value:
@@ -59,19 +59,86 @@ spec:
               - cluster-cloud-director
               - cluster-vsphere
               - cluster-eks
+          - key: "{{ `{{` }} request.object.spec.extraConfigs | to_string(@) {{ `}}` }}"
+            operator: Equals
+            value: "null"
       mutate:
-        # disable the following 2 attributes to disable mutation of already existing Apps
+        patchesJson6902: |-
+          - op: add
+            path: /spec/extraConfigs
+            value:
+              - kind: configMap
+                name: cluster-app-installation-values
+                namespace: "{{ `{{` }} request.object.metadata.namespace {{ `}}` }}"
+                priority: 10
+
+    # Rule 2: extraConfigs exists (possibly empty []) but does not yet contain the entry — prepend.
+    - name: prepend-to-extraconfigs-list
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+      # Also run during periodic background scans to backfill existing Apps.
+      skipBackgroundRequests: false
+      preconditions:
+        all:
+          - key: "{{ `{{` }} request.object.spec.name {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - cluster-aws
+              - cluster-azure
+              - cluster-cloud-director
+              - cluster-vsphere
+              - cluster-eks
+          - key: "{{ `{{` }} request.object.spec.extraConfigs | to_string(@) {{ `}}` }}"
+            operator: NotEquals
+            value: "null"
+          - key:
+              "{{ `{{` }} request.object.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) {{ `}}` }}"
+            operator: Equals
+            value: "0"
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/extraConfigs/0
+            value:
+              kind: configMap
+              name: cluster-app-installation-values
+              namespace: "{{ `{{` }} request.object.metadata.namespace {{ `}}` }}"
+              priority: 10
+
+    # Rule 3: Immediate backfill on policy create/update — extraConfigs absent.
+    # mutateExistingOnPolicyUpdate fires as soon as the policy lands on the cluster;
+    # the background controller patches all qualifying Apps without waiting for a
+    # periodic background scan.
+    #
+    # The label selector on match is intentional: it ensures this rule never triggers
+    # at admission time (no real App carries this label).  Per Kyverno docs, match
+    # criteria do NOT restrict mutateExistingOnPolicyUpdate target selection — the
+    # background controller uses the targets block exclusively.  This prevents
+    # Kyverno ≤ v1.16.x from evaluating target.* variables at admission time, which
+    # would cause a webhook error on every App create/update.
+    - name: init-extraconfigs-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
+      # skipBackgroundRequests: false is required so the background controller
+      # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
+      skipBackgroundRequests: false
+      mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
           - apiVersion: application.giantswarm.io/v1alpha1
             kind: App
             preconditions:
               all:
-                - key:
-                    "{{ `{{` }} target.spec.extraConfigs || `[]` | [?name=='cluster-app-installation-values' &&
-                    namespace=='giantswarm'] | length(@) {{ `}}` }}"
-                  operator: Equals
-                  value: "0"
                 - key: "{{ `{{` }} target.spec.name {{ `}}` }}"
                   operator: AnyIn
                   value:
@@ -80,13 +147,57 @@ spec:
                     - cluster-cloud-director
                     - cluster-vsphere
                     - cluster-eks
-        # end
+                - key: "{{ `{{` }} target.spec.extraConfigs | to_string(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "null"
         patchesJson6902: |-
           - op: add
-            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/extraConfigs
+            value:
+              - kind: configMap
+                name: cluster-app-installation-values
+                namespace: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+                priority: 10
+
+    # Rule 4: Immediate backfill on policy create/update — extraConfigs exists but entry missing.
+    # Same label-selector guard as rule 3 — see comment above.
+    - name: prepend-to-extraconfigs-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - App
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
+      skipBackgroundRequests: false
+      mutate:
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: application.giantswarm.io/v1alpha1
+            kind: App
+            preconditions:
+              all:
+                - key: "{{ `{{` }} target.spec.name {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - cluster-aws
+                    - cluster-azure
+                    - cluster-cloud-director
+                    - cluster-vsphere
+                    - cluster-eks
+                - key: "{{ `{{` }} target.spec.extraConfigs | to_string(@) {{ `}}` }}"
+                  operator: NotEquals
+                  value: "null"
+                - key:
+                    "{{ `{{` }} target.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "0"
+        patchesJson6902: |-
+          - op: add
             path: /spec/extraConfigs/0
             value:
               kind: configMap
               name: cluster-app-installation-values
-              namespace: giantswarm
+              namespace: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
               priority: 10

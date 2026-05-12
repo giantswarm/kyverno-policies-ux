@@ -21,6 +21,24 @@ kubectl apply -f https://raw.githubusercontent.com/giantswarm/apiextensions-appl
 # HelmRelease CRD from fluxcd/helm-controller (used by prepend-cluster-app-config-map-hr)
 kubectl apply -f https://raw.githubusercontent.com/fluxcd/helm-controller/refs/heads/main/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml
 
+# Create giantswarm namespace and source ConfigMap so they exist before the policy is installed.
+# The sync-cluster-app-configmap-to-org-namespaces policy uses clone+sync which requires the
+# source to be present at policy-apply time for Kyverno to set up its internal watch correctly.
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: giantswarm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-app-installation-values
+  namespace: giantswarm
+data:
+  placeholder: "true"
+EOF
+
 # Organization CRD without status subresource so tests can set status.namespace via regular apply
 kubectl apply -f - <<'EOF'
 apiVersion: apiextensions.k8s.io/v1
