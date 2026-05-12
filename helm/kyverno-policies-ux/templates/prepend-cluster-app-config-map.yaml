@@ -118,7 +118,7 @@ spec:
     # at admission time (no real App carries this label).  Per Kyverno docs, match
     # criteria do NOT restrict mutateExistingOnPolicyUpdate target selection — the
     # background controller uses the targets block exclusively.  This prevents
-    # Kyverno <= v1.16.x from evaluating target.* variables at admission time, which
+    # Kyverno ≤ v1.16.x from evaluating target.* variables at admission time, which
     # would cause a webhook error on every App create/update.
     - name: init-extraconfigs-list-backfill
       match:
