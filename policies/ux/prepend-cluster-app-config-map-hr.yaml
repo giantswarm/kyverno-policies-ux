@@ -18,6 +18,14 @@ rules:
       - list
       - watch
       - update
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+    resources:
+      - ocirepositories
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -31,8 +39,9 @@ metadata:
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >
       Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
-      HelmRelease with the 'app-type: cluster' label in an org-* namespace, and if not, prepends it
-      as the first entry.
+      HelmRelease with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef
+      points to an OCIRepository with a URL from the known cluster-app registry, and if not,
+      prepends it as the first entry.
 spec:
   background: true
   rules:
@@ -51,8 +60,24 @@ spec:
                 matchLabels:
                   app-type: cluster
       skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name }}"
+            jmesPath: "spec.url"
       preconditions:
         all:
+          - key: "{{ request.object.spec.chartRef.kind || '' }}"
+            operator: Equals
+            value: "OCIRepository"
+          - key: "{{ ociRepoUrl }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
           - key: "{{ request.object.spec.valuesFrom | to_string(@) }}"
             operator: Equals
             value: "null"
@@ -77,8 +102,24 @@ spec:
                 matchLabels:
                   app-type: cluster
       skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name }}"
+            jmesPath: "spec.url"
       preconditions:
         all:
+          - key: "{{ request.object.spec.chartRef.kind || '' }}"
+            operator: Equals
+            value: "OCIRepository"
+          - key: "{{ ociRepoUrl }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
           - key: "{{ request.object.spec.valuesFrom | to_string(@) }}"
             operator: NotEquals
             value: "null"
@@ -106,6 +147,9 @@ spec:
     # background controller uses the targets block exclusively.  This prevents
     # Kyverno <= v1.16.x from evaluating target.* variables at admission time, which
     # would cause a webhook error on every HelmRelease create/update.
+    #
+    # context uses target.* which is only available in background mode — safe here because
+    # the label selector guarantee above means this rule never runs at admission time.
     - name: init-valuesfrom-list-backfill
       match:
         any:
@@ -118,6 +162,21 @@ spec:
       # skipBackgroundRequests: false is required so the background controller
       # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
       skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ ociRepoUrl }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -132,6 +191,9 @@ spec:
                   operator: AnyIn
                   value:
                     - "org-*"
+                - key: "{{ target.spec.chartRef.kind || '' }}"
+                  operator: Equals
+                  value: "OCIRepository"
                 - key: "{{ target.spec.valuesFrom | to_string(@) }}"
                   operator: Equals
                   value: "null"
@@ -143,7 +205,7 @@ spec:
                 name: cluster-app-installation-values
 
     # Rule 4: Immediate backfill on policy create/update — valuesFrom exists but entry missing.
-    # Same label-selector guard as rule 3 — see comment above.
+    # Same label-selector guard and target.* context as rule 3 — see comment above.
     - name: prepend-to-valuesfrom-list-backfill
       match:
         any:
@@ -154,6 +216,21 @@ spec:
                 matchLabels:
                   kyverno.io/backfill-trigger: "true"
       skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ ociRepoUrl }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -168,6 +245,9 @@ spec:
                   operator: AnyIn
                   value:
                     - "org-*"
+                - key: "{{ target.spec.chartRef.kind || '' }}"
+                  operator: Equals
+                  value: "OCIRepository"
                 - key: "{{ target.spec.valuesFrom | to_string(@) }}"
                   operator: NotEquals
                   value: "null"

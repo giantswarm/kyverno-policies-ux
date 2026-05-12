@@ -39,6 +39,39 @@ spec:
                 status: {}
           EOF
 
+  - name: install-ocirepository-crd
+    try:
+    - script:
+        content: |
+          if kubectl get crd ocirepositories.source.toolkit.fluxcd.io &>/dev/null; then
+            echo "OCIRepository CRD already exists, skipping"
+            exit 0
+          fi
+          kubectl apply -f - <<'EOF'
+          apiVersion: apiextensions.k8s.io/v1
+          kind: CustomResourceDefinition
+          metadata:
+            name: ocirepositories.source.toolkit.fluxcd.io
+          spec:
+            group: source.toolkit.fluxcd.io
+            names:
+              kind: OCIRepository
+              listKind: OCIRepositoryList
+              plural: ocirepositories
+              singular: ocirepository
+            scope: Namespaced
+            versions:
+            - name: v1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              subresources:
+                status: {}
+          EOF
+
   - name: check-policy-ready
     use:
       template: ../_steps-templates/cluster-policy-ready.yaml
@@ -55,8 +88,30 @@ spec:
           kind: Namespace
           metadata:
             name: org-chainsaw-prepend-hr
+    # OCIRepository with a valid allowlisted URL — used by most test HRs
+    - apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: cluster-aws
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            url: "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+            interval: 10m
+    # OCIRepository with a URL outside the allowlist — used for the negative test
+    - apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: cluster-unknown
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            url: "oci://some.other.registry.io/charts/cluster-unknown"
+            interval: 10m
 
-  # HR with no spec.valuesFrom — ConfigMap must be added as the only entry
+  # HR with spec.chartRef → valid OCIRepository, no valuesFrom — rule 1 must fire
   - name: prepend-when-valuesFrom-missing
     try:
     - apply:
@@ -70,13 +125,10 @@ spec:
               app-type: cluster
           spec:
             interval: 10m
-            chart:
-              spec:
-                chart: test-chart
-                version: ">=0.0.0-0"
-                sourceRef:
-                  kind: HelmRepository
-                  name: test-repo
+            chartRef:
+              kind: OCIRepository
+              name: cluster-aws
+              namespace: org-chainsaw-prepend-hr
     - assert:
         timeout: 30s
         resource:
@@ -99,7 +151,7 @@ spec:
           fi
           echo "OK: cluster-app-installation-values is at index 0"
 
-  # HR with existing entries in valuesFrom — ConfigMap must be inserted at index 0
+  # HR with spec.chartRef → valid OCIRepository, existing valuesFrom — ConfigMap must be at index 0
   - name: prepend-before-existing-valuesFrom-entries
     try:
     - apply:
@@ -113,13 +165,10 @@ spec:
               app-type: cluster
           spec:
             interval: 10m
-            chart:
-              spec:
-                chart: test-chart
-                version: ">=0.0.0-0"
-                sourceRef:
-                  kind: HelmRepository
-                  name: test-repo
+            chartRef:
+              kind: OCIRepository
+              name: cluster-aws
+              namespace: org-chainsaw-prepend-hr
             valuesFrom:
             - kind: ConfigMap
               name: other-config
@@ -167,13 +216,10 @@ spec:
               app-type: cluster
           spec:
             interval: 10m
-            chart:
-              spec:
-                chart: test-chart
-                version: ">=0.0.0-0"
-                sourceRef:
-                  kind: HelmRepository
-                  name: test-repo
+            chartRef:
+              kind: OCIRepository
+              name: cluster-aws
+              namespace: org-chainsaw-prepend-hr
             valuesFrom:
             - kind: ConfigMap
               name: cluster-app-installation-values
@@ -192,7 +238,36 @@ spec:
           fi
           echo "OK: no duplication — exactly 1 cluster-app-installation-values entry"
 
-  # HR in a non-org-* namespace — must not be mutated
+  # HR with spec.chartRef → OCIRepository with URL NOT in the allowlist — must not be mutated
+  - name: no-mutation-for-non-allowlist-ocirepository
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-non-allowlist-oci
+            namespace: org-chainsaw-prepend-hr
+            labels:
+              app-type: cluster
+          spec:
+            interval: 10m
+            chartRef:
+              kind: OCIRepository
+              name: cluster-unknown
+              namespace: org-chainsaw-prepend-hr
+    - script:
+        content: |
+          sleep 10
+          values_from=$(kubectl get helmrelease hr-non-allowlist-oci -n org-chainsaw-prepend-hr \
+            -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
+          if echo "$values_from" | grep -q "cluster-app-installation-values"; then
+            echo "ERROR: ConfigMap was added to HR referencing a non-allowlisted OCIRepository"
+            exit 1
+          fi
+          echo "OK: no mutation for HR with non-allowlisted OCIRepository URL"
+
+  # HR in a non-org-* namespace — must not be mutated (match filter: namespaces: org-*)
   - name: no-mutation-outside-org-namespace
     try:
     - apply:
@@ -212,13 +287,6 @@ spec:
               app-type: cluster
           spec:
             interval: 10m
-            chart:
-              spec:
-                chart: test-chart
-                version: ">=0.0.0-0"
-                sourceRef:
-                  kind: HelmRepository
-                  name: test-repo
     - script:
         content: |
           sleep 10
@@ -242,13 +310,6 @@ spec:
             namespace: org-chainsaw-prepend-hr
           spec:
             interval: 10m
-            chart:
-              spec:
-                chart: test-chart
-                version: ">=0.0.0-0"
-                sourceRef:
-                  kind: HelmRepository
-                  name: test-repo
     - script:
         content: |
           sleep 10
