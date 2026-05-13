@@ -39,9 +39,8 @@ metadata:
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >
       Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
-      HelmRelease with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef
-      points to an OCIRepository with a URL from the known cluster-app registry, and if not,
-      prepends it as the first entry.
+      HelmRelease in an org-* namespace whose spec.chartRef points to an OCIRepository with a URL
+      from the known cluster-app registry, and if not, prepends it as the first entry.
 spec:
   background: true
   rules:
@@ -56,9 +55,6 @@ spec:
                 - HelmRelease
               namespaces:
                 - "org-*"
-              selector:
-                matchLabels:
-                  app-type: cluster
       skipBackgroundRequests: false
       context:
         - name: ociRepoUrl
@@ -98,9 +94,6 @@ spec:
                 - HelmRelease
               namespaces:
                 - "org-*"
-              selector:
-                matchLabels:
-                  app-type: cluster
       skipBackgroundRequests: false
       context:
         - name: ociRepoUrl
@@ -167,9 +160,6 @@ spec:
         targets:
           - apiVersion: helm.toolkit.fluxcd.io/v2
             kind: HelmRelease
-            selector:
-              matchLabels:
-                app-type: cluster
             context:
               - name: ociRepoUrl
                 apiCall:
@@ -219,9 +209,6 @@ spec:
         targets:
           - apiVersion: helm.toolkit.fluxcd.io/v2
             kind: HelmRelease
-            selector:
-              matchLabels:
-                app-type: cluster
             context:
               - name: ociRepoUrl
                 apiCall:
