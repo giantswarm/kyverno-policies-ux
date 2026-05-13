@@ -162,21 +162,6 @@ spec:
       # skipBackgroundRequests: false is required so the background controller
       # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
       skipBackgroundRequests: false
-      context:
-        - name: ociRepoUrl
-          apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
-            jmesPath: "spec.url"
-      preconditions:
-        all:
-          - key: "{{ ociRepoUrl }}"
-            operator: AnyIn
-            value:
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -185,6 +170,11 @@ spec:
             selector:
               matchLabels:
                 app-type: cluster
+            context:
+              - name: ociRepoUrl
+                apiCall:
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
+                  jmesPath: "spec.url"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
@@ -194,6 +184,14 @@ spec:
                 - key: "{{ target.spec.chartRef.kind || '' }}"
                   operator: Equals
                   value: "OCIRepository"
+                - key: "{{ ociRepoUrl }}"
+                  operator: AnyIn
+                  value:
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
                 - key: "{{ target.spec.valuesFrom | to_string(@) }}"
                   operator: Equals
                   value: "null"
@@ -216,21 +214,6 @@ spec:
                 matchLabels:
                   kyverno.io/backfill-trigger: "true"
       skipBackgroundRequests: false
-      context:
-        - name: ociRepoUrl
-          apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
-            jmesPath: "spec.url"
-      preconditions:
-        all:
-          - key: "{{ ociRepoUrl }}"
-            operator: AnyIn
-            value:
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
       mutate:
         mutateExistingOnPolicyUpdate: true
         targets:
@@ -239,6 +222,11 @@ spec:
             selector:
               matchLabels:
                 app-type: cluster
+            context:
+              - name: ociRepoUrl
+                apiCall:
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
+                  jmesPath: "spec.url"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
@@ -248,6 +236,14 @@ spec:
                 - key: "{{ target.spec.chartRef.kind || '' }}"
                   operator: Equals
                   value: "OCIRepository"
+                - key: "{{ ociRepoUrl }}"
+                  operator: AnyIn
+                  value:
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
                 - key: "{{ target.spec.valuesFrom | to_string(@) }}"
                   operator: NotEquals
                   value: "null"
