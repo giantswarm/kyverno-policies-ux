@@ -15,6 +15,33 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-p
 # Release CRD from giantswarm/releases
 kubectl apply -f https://raw.githubusercontent.com/giantswarm/releases/master/sdk/config/crd/bases/release.giantswarm.io_releases.yaml
 
+# App CRD — simplified (no kubeConfig requirement) so test App objects don't need that field.
+# Must be installed before policies so Kyverno can configure its webhook for the App kind.
+kubectl apply -f - <<'EOF'
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: apps.application.giantswarm.io
+spec:
+  group: application.giantswarm.io
+  names:
+    kind: App
+    listKind: AppList
+    plural: apps
+    singular: app
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+    subresources:
+      status: {}
+EOF
+
 # Create giantswarm namespace and source ConfigMap so they exist before the policy is installed.
 # The sync-cluster-app-configmap-to-org-namespaces policy uses clone+sync which requires the
 # source to be present at policy-apply time for Kyverno to set up its internal watch correctly.
