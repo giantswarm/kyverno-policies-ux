@@ -59,8 +59,8 @@ spec:
       context:
         - name: ociRepoUrl
           apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name }}"
-            jmesPath: "spec.url"
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name || '__no_chart_ref__' }}"
+            jmesPath: "spec.url || ''"
       preconditions:
         all:
           - key: "{{ request.object.spec.chartRef.kind || '' }}"
@@ -98,8 +98,8 @@ spec:
       context:
         - name: ociRepoUrl
           apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name }}"
-            jmesPath: "spec.url"
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ request.object.spec.chartRef.namespace || request.object.metadata.namespace }}/ocirepositories/{{ request.object.spec.chartRef.name || '__no_chart_ref__' }}"
+            jmesPath: "spec.url || ''"
       preconditions:
         all:
           - key: "{{ request.object.spec.chartRef.kind || '' }}"
@@ -159,8 +159,8 @@ spec:
             context:
               - name: ociRepoUrl
                 apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
-                  jmesPath: "spec.url"
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name || '__no_chart_ref__' }}"
+                  jmesPath: "spec.url || ''"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
@@ -207,8 +207,8 @@ spec:
             context:
               - name: ociRepoUrl
                 apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name }}"
-                  jmesPath: "spec.url"
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories/{{ target.spec.chartRef.name || '__no_chart_ref__' }}"
+                  jmesPath: "spec.url || ''"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
