@@ -1,0 +1,265 @@
+# THIS FILE IS GENERATED WITH 'make generate' - DO NOT EDIT MANUALLY
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    application.giantswarm.io/team: honeybadger
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+  name: kyverno:gs-ux:prepend-cluster-app-config-map-hr
+rules:
+  - apiGroups:
+      - helm.toolkit.fluxcd.io
+    resources:
+      - helmreleases
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+    resources:
+      - ocirepositories
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prepend-cluster-app-config-map-hr
+  labels:
+    application.giantswarm.io/team: honeybadger
+  annotations:
+    policies.kyverno.io/title: >-
+      Prepend 'cluster-app-installation-values' ConfigMap to HelmRelease valuesFrom for cluster HelmReleases
+    policies.kyverno.io/subject: HelmRelease
+    policies.kyverno.io/description: >
+      Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
+      HelmRelease with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef
+      points to an OCIRepository with a URL from the known cluster-app registry, and if not,
+      prepends it as the first entry.
+spec:
+  background: true
+  rules:
+    # Rule 1: valuesFrom is absent (null) — create the field with the entry as the only element.
+    # JSON Patch op:add at a numeric index requires the parent array to already exist, so we
+    # must initialise it in a separate rule rather than patching at /spec/valuesFrom/0.
+    - name: init-valuesfrom-list
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+              namespaces:
+                - "org-*"
+              selector:
+                matchLabels:
+                  app-type: cluster
+      skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} request.object.spec.chartRef.namespace || request.object.metadata.namespace {{ `}}` }}/ocirepositories/{{ `{{` }} request.object.spec.chartRef.name {{ `}}` }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} request.object.spec.chartRef.kind || '' {{ `}}` }}"
+            operator: Equals
+            value: "OCIRepository"
+          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
+          - key: "{{ `{{` }} request.object.spec.valuesFrom | to_string(@) {{ `}}` }}"
+            operator: Equals
+            value: "null"
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/valuesFrom
+            value:
+              - kind: ConfigMap
+                name: cluster-app-installation-values
+
+    # Rule 2: valuesFrom exists (possibly empty []) but does not yet contain the entry — prepend.
+    - name: prepend-to-valuesfrom-list
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+              namespaces:
+                - "org-*"
+              selector:
+                matchLabels:
+                  app-type: cluster
+      skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} request.object.spec.chartRef.namespace || request.object.metadata.namespace {{ `}}` }}/ocirepositories/{{ `{{` }} request.object.spec.chartRef.name {{ `}}` }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} request.object.spec.chartRef.kind || '' {{ `}}` }}"
+            operator: Equals
+            value: "OCIRepository"
+          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
+          - key: "{{ `{{` }} request.object.spec.valuesFrom | to_string(@) {{ `}}` }}"
+            operator: NotEquals
+            value: "null"
+          - key:
+              "{{ `{{` }} request.object.spec.valuesFrom | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
+            operator: Equals
+            value: "0"
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/valuesFrom/0
+            value:
+              kind: ConfigMap
+              name: cluster-app-installation-values
+
+    # Rule 3: Immediate backfill on policy create/update — valuesFrom absent.
+    # mutateExistingOnPolicyUpdate fires as soon as the policy lands on the cluster;
+    # the background controller patches all qualifying HelmReleases without waiting for a
+    # periodic background scan.
+    #
+    # The label selector on match is intentional: it ensures this rule never triggers
+    # at admission time (no real HelmRelease carries this label).  Per Kyverno docs, match
+    # criteria do NOT restrict mutateExistingOnPolicyUpdate target selection — the
+    # background controller uses the targets block exclusively.  This prevents
+    # Kyverno <= v1.16.x from evaluating target.* variables at admission time, which
+    # would cause a webhook error on every HelmRelease create/update.
+    #
+    # context uses target.* which is only available in background mode — safe here because
+    # the label selector guarantee above means this rule never runs at admission time.
+    - name: init-valuesfrom-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
+      # skipBackgroundRequests: false is required so the background controller
+      # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
+      skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} target.spec.chartRef.namespace || target.metadata.namespace {{ `}}` }}/ocirepositories/{{ `{{` }} target.spec.chartRef.name {{ `}}` }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
+      mutate:
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            selector:
+              matchLabels:
+                app-type: cluster
+            preconditions:
+              all:
+                - key: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - "org-*"
+                - key: "{{ `{{` }} target.spec.chartRef.kind || '' {{ `}}` }}"
+                  operator: Equals
+                  value: "OCIRepository"
+                - key: "{{ `{{` }} target.spec.valuesFrom | to_string(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "null"
+        patchesJson6902: |-
+          - op: add
+            path: /spec/valuesFrom
+            value:
+              - kind: ConfigMap
+                name: cluster-app-installation-values
+
+    # Rule 4: Immediate backfill on policy create/update — valuesFrom exists but entry missing.
+    # Same label-selector guard and target.* context as rule 3 — see comment above.
+    - name: prepend-to-valuesfrom-list-backfill
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+              selector:
+                matchLabels:
+                  kyverno.io/backfill-trigger: "true"
+      skipBackgroundRequests: false
+      context:
+        - name: ociRepoUrl
+          apiCall:
+            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} target.spec.chartRef.namespace || target.metadata.namespace {{ `}}` }}/ocirepositories/{{ `{{` }} target.spec.chartRef.name {{ `}}` }}"
+            jmesPath: "spec.url"
+      preconditions:
+        all:
+          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
+            operator: AnyIn
+            value:
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
+              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
+      mutate:
+        mutateExistingOnPolicyUpdate: true
+        targets:
+          - apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            selector:
+              matchLabels:
+                app-type: cluster
+            preconditions:
+              all:
+                - key: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
+                  operator: AnyIn
+                  value:
+                    - "org-*"
+                - key: "{{ `{{` }} target.spec.chartRef.kind || '' {{ `}}` }}"
+                  operator: Equals
+                  value: "OCIRepository"
+                - key: "{{ `{{` }} target.spec.valuesFrom | to_string(@) {{ `}}` }}"
+                  operator: NotEquals
+                  value: "null"
+                - key:
+                    "{{ `{{` }} target.spec.valuesFrom | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
+                  operator: Equals
+                  value: "0"
+        patchesJson6902: |-
+          - op: add
+            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
+            path: /spec/valuesFrom/0
+            value:
+              kind: ConfigMap
+              name: cluster-app-installation-values
