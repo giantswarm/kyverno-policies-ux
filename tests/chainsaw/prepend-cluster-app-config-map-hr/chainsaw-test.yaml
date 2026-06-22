@@ -228,7 +228,7 @@ spec:
     - script:
         # Wait to give the background controller time to act (if it mistakenly would)
         content: |
-          sleep 10
+          sleep 3
           count=$(kubectl get helmrelease hr-already-has-configmap -n org-chainsaw-prepend-hr \
             -o jsonpath='{range .spec.valuesFrom[*]}{.name}{"\n"}{end}' \
             | grep -c "^cluster-app-installation-values$" || true)
@@ -258,7 +258,7 @@ spec:
               namespace: org-chainsaw-prepend-hr
     - script:
         content: |
-          sleep 10
+          sleep 3
           values_from=$(kubectl get helmrelease hr-non-allowlist-oci -n org-chainsaw-prepend-hr \
             -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
           if echo "$values_from" | grep -q "cluster-app-installation-values"; then
@@ -289,7 +289,7 @@ spec:
             interval: 10m
     - script:
         content: |
-          sleep 10
+          sleep 3
           values_from=$(kubectl get helmrelease hr-non-org -n non-org-chainsaw-prepend-hr \
             -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
           if echo "$values_from" | grep -q "cluster-app-installation-values"; then
@@ -312,7 +312,7 @@ spec:
             interval: 10m
     - script:
         content: |
-          sleep 10
+          sleep 3
           values_from=$(kubectl get helmrelease hr-no-cluster-label -n org-chainsaw-prepend-hr \
             -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
           if echo "$values_from" | grep -q "cluster-app-installation-values"; then
