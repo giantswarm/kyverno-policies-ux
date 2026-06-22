@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.15.0-rc.1] - 2026-06-22
 
+### Added
+
+- Add new `prepend-cluster-app-config-map` policy to automatically prepend the `cluster-app-config` ConfigMap
+  to the list of config maps in cluster app definitions.
+
 ## [0.14.0] - 2026-05-06
 
 ### Added
