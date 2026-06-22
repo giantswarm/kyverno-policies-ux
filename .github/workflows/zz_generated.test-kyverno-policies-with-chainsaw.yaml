@@ -2,12 +2,13 @@
 #
 #    devctl
 #
-#    https://github.com/giantswarm/devctl/blob/29f755e930b5ec8de619886d96fcf1b65f7b9d2f/pkg/gen/input/workflows/internal/file/test-kyverno-policies-with-chainsaw.yaml.template
+#    https://github.com/giantswarm/devctl/blob/e8b63a9422be0726ba42a16461d2491229ca0982/pkg/gen/input/workflows/internal/file/test-kyverno-policies-with-chainsaw.yaml.template
 #
 
 name: "Test Kyverno Policies with Chainsaw"
 on:
   pull_request: {}
+  merge_group: {}
   workflow_dispatch: {}
 env:
   KYVERNO_POLICIES_APP_NAME: kyverno-policies-ux
