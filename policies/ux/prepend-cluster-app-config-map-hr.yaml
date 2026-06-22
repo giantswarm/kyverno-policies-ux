@@ -39,8 +39,9 @@ metadata:
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >
       Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
-      HelmRelease in an org-* namespace whose spec.chartRef points to an OCIRepository with a URL
-      from the known cluster-app registry, and if not, prepends it as the first entry.
+      HelmRelease with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef
+      points to an OCIRepository with a URL from the known cluster-app registry, and if not,
+      prepends it as the first entry.
 spec:
   background: true
   rules:
@@ -55,6 +56,9 @@ spec:
                 - HelmRelease
               namespaces:
                 - "org-*"
+              selector:
+                matchLabels:
+                  app-type: cluster
       skipBackgroundRequests: false
       context:
         - name: ociRepoUrl
@@ -94,6 +98,9 @@ spec:
                 - HelmRelease
               namespaces:
                 - "org-*"
+              selector:
+                matchLabels:
+                  app-type: cluster
       skipBackgroundRequests: false
       context:
         - name: ociRepoUrl
@@ -159,8 +166,8 @@ spec:
             context:
               - name: ociRepoUrl
                 apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories"
-                  jmesPath: "items[?metadata.name == '{{ target.spec.chartRef.name || '' }}'].spec.url | [0] || ''"
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/ocirepositories"
+                  jmesPath: "items[?metadata.name == '{{ target.spec.chartRef.name || '' }}' && metadata.namespace == '{{ target.spec.chartRef.namespace || target.metadata.namespace }}'].spec.url | [0] || ''"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
@@ -207,8 +214,8 @@ spec:
             context:
               - name: ociRepoUrl
                 apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ target.spec.chartRef.namespace || target.metadata.namespace }}/ocirepositories"
-                  jmesPath: "items[?metadata.name == '{{ target.spec.chartRef.name || '' }}'].spec.url | [0] || ''"
+                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/ocirepositories"
+                  jmesPath: "items[?metadata.name == '{{ target.spec.chartRef.name || '' }}' && metadata.namespace == '{{ target.spec.chartRef.namespace || target.metadata.namespace }}'].spec.url | [0] || ''"
             preconditions:
               all:
                 - key: "{{ target.metadata.namespace }}"
