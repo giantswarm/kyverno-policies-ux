@@ -15,8 +15,32 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-p
 # Release CRD from giantswarm/releases
 kubectl apply -f https://raw.githubusercontent.com/giantswarm/releases/master/sdk/config/crd/bases/release.giantswarm.io_releases.yaml
 
-# App CRD from giantswarm/apiextensions-application (used by prepend-cluster-app-config-map)
-kubectl apply -f https://raw.githubusercontent.com/giantswarm/apiextensions-application/refs/heads/main/config/crd/v1/application.giantswarm.io_apps.yaml
+# App CRD — simplified (no kubeConfig requirement) so test App objects don't need that field.
+# Must be installed before policies so Kyverno can configure its webhook for the App kind.
+kubectl apply -f - <<'EOF'
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: apps.application.giantswarm.io
+spec:
+  group: application.giantswarm.io
+  names:
+    kind: App
+    listKind: AppList
+    plural: apps
+    singular: app
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+    subresources:
+      status: {}
+EOF
 
 # HelmRelease CRD from fluxcd/helm-controller (used by prepend-cluster-app-config-map-hr)
 kubectl apply -f https://raw.githubusercontent.com/fluxcd/helm-controller/refs/heads/main/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml

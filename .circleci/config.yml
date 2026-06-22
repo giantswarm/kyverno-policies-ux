@@ -1,12 +1,12 @@
 version: 2.1
 
 orbs:
-  architect: giantswarm/architect@6.15.0
+  architect: giantswarm/architect@9.5.3
 
 jobs:
   verify:
     docker:
-    - image: cimg/base:2026.04
+    - image: cimg/base:2026.06
     steps:
     - checkout
     - run:

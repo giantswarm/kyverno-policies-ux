@@ -114,21 +114,20 @@ spec:
     # the background controller patches all qualifying Apps without waiting for a
     # periodic background scan.
     #
-    # The label selector on match is intentional: it ensures this rule never triggers
-    # at admission time (no real App carries this label).  Per Kyverno docs, match
-    # criteria do NOT restrict mutateExistingOnPolicyUpdate target selection — the
-    # background controller uses the targets block exclusively.  This prevents
-    # Kyverno ≤ v1.16.x from evaluating target.* variables at admission time, which
-    # would cause a webhook error on every App create/update.
+    # match targets this ClusterPolicy by name rather than App resources so that:
+    # - Kyverno ≤ v1.16.x never evaluates target.* variables at App admission time
+    #   (ClusterPolicy kind never matches an incoming App CREATE/UPDATE request).
+    # - Kyverno ≥ v1.17.x finds exactly one matching trigger resource (the policy
+    #   itself) when enumerating trigger resources for UpdateRequest creation, so
+    #   UpdateRequests are created for all qualifying Apps in the targets block.
     - name: init-extraconfigs-list-backfill
       match:
         any:
           - resources:
               kinds:
-                - App
-              selector:
-                matchLabels:
-                  kyverno.io/backfill-trigger: "true"
+                - ClusterPolicy
+              names:
+                - prepend-cluster-app-config-map
       # skipBackgroundRequests: false is required so the background controller
       # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
       skipBackgroundRequests: false
@@ -160,16 +159,15 @@ spec:
                 priority: 10
 
     # Rule 4: Immediate backfill on policy create/update — extraConfigs exists but entry missing.
-    # Same label-selector guard as rule 3 — see comment above.
+    # Same ClusterPolicy-as-trigger match as rule 3 — see comment above.
     - name: prepend-to-extraconfigs-list-backfill
       match:
         any:
           - resources:
               kinds:
-                - App
-              selector:
-                matchLabels:
-                  kyverno.io/backfill-trigger: "true"
+                - ClusterPolicy
+              names:
+                - prepend-cluster-app-config-map
       skipBackgroundRequests: false
       mutate:
         mutateExistingOnPolicyUpdate: true
