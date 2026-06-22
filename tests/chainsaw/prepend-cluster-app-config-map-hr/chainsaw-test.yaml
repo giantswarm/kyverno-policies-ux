@@ -5,6 +5,7 @@ metadata:
 spec:
   timeouts:
     apply: 30s
+    exec: 15s
   steps:
   - name: install-helmrelease-crd
     try:
@@ -270,16 +271,14 @@ spec:
           echo "OK: no mutation for HR with non-allowlisted OCIRepository URL"
 
   # HR in a non-org-* namespace — must not be mutated (match filter: namespaces: org-*)
+  # Uses kubectl apply via script (not chainsaw apply) to avoid Kyverno's background controller
+  # annotating the HelmRelease and triggering chainsaw SSA conflict-retry loops.
   - name: no-mutation-outside-org-namespace
     try:
-    - apply:
-        resource:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: non-org-chainsaw-prepend-hr
-    - apply:
-        resource:
+    - script:
+        content: |
+          kubectl create namespace non-org-chainsaw-prepend-hr --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f - <<'EOF'
           apiVersion: helm.toolkit.fluxcd.io/v2
           kind: HelmRelease
           metadata:
@@ -289,8 +288,7 @@ spec:
               app-type: cluster
           spec:
             interval: 10m
-    - script:
-        content: |
+          EOF
           sleep 3
           values_from=$(kubectl get helmrelease hr-non-org -n non-org-chainsaw-prepend-hr \
             -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
@@ -301,10 +299,12 @@ spec:
           echo "OK: no mutation for HR in non-org namespace"
 
   # HR in org-* namespace but without the app-type: cluster label — must not be mutated
+  # Uses kubectl apply via script (not chainsaw apply) — same reason as no-mutation-outside-org-namespace.
   - name: no-mutation-without-cluster-label
     try:
-    - apply:
-        resource:
+    - script:
+        content: |
+          kubectl apply -f - <<'EOF'
           apiVersion: helm.toolkit.fluxcd.io/v2
           kind: HelmRelease
           metadata:
@@ -312,8 +312,7 @@ spec:
             namespace: org-chainsaw-prepend-hr
           spec:
             interval: 10m
-    - script:
-        content: |
+          EOF
           sleep 3
           values_from=$(kubectl get helmrelease hr-no-cluster-label -n org-chainsaw-prepend-hr \
             -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")

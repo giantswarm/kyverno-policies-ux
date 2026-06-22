@@ -163,6 +163,13 @@ spec:
         targets:
           - apiVersion: helm.toolkit.fluxcd.io/v2
             kind: HelmRelease
+            # Limit the target set to HelmReleases that carry the cluster label, matching the
+            # same selector used in the admission rules.  This prevents the background controller
+            # from fetching (and annotating) unrelated HelmReleases, which would otherwise
+            # trigger chainsaw's SSA conflict-retry loop in tests.
+            selector:
+              matchLabels:
+                app-type: cluster
             context:
               - name: ociRepoUrl
                 apiCall:
@@ -211,6 +218,9 @@ spec:
         targets:
           - apiVersion: helm.toolkit.fluxcd.io/v2
             kind: HelmRelease
+            selector:
+              matchLabels:
+                app-type: cluster
             context:
               - name: ociRepoUrl
                 apiCall:
