@@ -16,7 +16,9 @@ TEST_CLUSTER_NAME = "test"
 LOGGER = logging.getLogger(__name__)
 
 # TODO: Can we take this from a central config to avoid repetition?
-KYVERNO_VERSION = "v1.12.6"
+# Must be >= v1.17 because the chart ships MutatingPolicy (policies.kyverno.io/v1),
+# whose CRDs only exist from Kyverno 1.17 onwards.
+KYVERNO_VERSION = "v1.17.0"
 
 @pytest.fixture(scope='module')
 def fixtures(kube_cluster: Cluster):

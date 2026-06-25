@@ -28,8 +28,8 @@ rules:
       - list
       - watch
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: prepend-cluster-app-config-map-hr
   labels:
@@ -44,217 +44,80 @@ metadata:
       points to an OCIRepository with a URL from the known cluster-app registry, and if not,
       prepends it as the first entry.
 spec:
-  background: true
-  rules:
-    # Rule 1: valuesFrom is absent (null) — create the field with the entry as the only element.
-    # JSON Patch op:add at a numeric index requires the parent array to already exist, so we
-    # must initialise it in a separate rule rather than patching at /spec/valuesFrom/0.
-    - name: init-valuesfrom-list
-      match:
-        any:
-          - resources:
-              kinds:
-                - HelmRelease
-              namespaces:
-                - "org-*"
-              selector:
-                matchLabels:
-                  app-type: cluster
-      skipBackgroundRequests: false
-      context:
-        - name: ociRepoUrl
-          apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} request.object.spec.chartRef.namespace || request.object.metadata.namespace {{ `}}` }}/ocirepositories"
-            jmesPath: "items[?metadata.name == '{{ `{{` }} request.object.spec.chartRef.name || '' {{ `}}` }}'].spec.url | [0] || ''"
-      preconditions:
-        all:
-          - key: "{{ `{{` }} request.object.spec.chartRef.kind || '' {{ `}}` }}"
-            operator: Equals
-            value: "OCIRepository"
-          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
-            operator: AnyIn
-            value:
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
-          - key: "{{ `{{` }} request.object.spec.valuesFrom | to_string(@) {{ `}}` }}"
-            operator: Equals
-            value: "null"
-      mutate:
-        patchesJson6902: |-
-          - op: add
-            path: /spec/valuesFrom
-            value:
-              - kind: ConfigMap
-                name: cluster-app-installation-values
-
-    # Rule 2: valuesFrom exists (possibly empty []) but does not yet contain the entry — prepend.
-    - name: prepend-to-valuesfrom-list
-      match:
-        any:
-          - resources:
-              kinds:
-                - HelmRelease
-              namespaces:
-                - "org-*"
-              selector:
-                matchLabels:
-                  app-type: cluster
-      skipBackgroundRequests: false
-      context:
-        - name: ociRepoUrl
-          apiCall:
-            urlPath: "/apis/source.toolkit.fluxcd.io/v1/namespaces/{{ `{{` }} request.object.spec.chartRef.namespace || request.object.metadata.namespace {{ `}}` }}/ocirepositories"
-            jmesPath: "items[?metadata.name == '{{ `{{` }} request.object.spec.chartRef.name || '' {{ `}}` }}'].spec.url | [0] || ''"
-      preconditions:
-        all:
-          - key: "{{ `{{` }} request.object.spec.chartRef.kind || '' {{ `}}` }}"
-            operator: Equals
-            value: "OCIRepository"
-          - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
-            operator: AnyIn
-            value:
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-              - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
-          - key: "{{ `{{` }} request.object.spec.valuesFrom | to_string(@) {{ `}}` }}"
-            operator: NotEquals
-            value: "null"
-          - key:
-              "{{ `{{` }} request.object.spec.valuesFrom | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
-            operator: Equals
-            value: "0"
-      mutate:
-        patchesJson6902: |-
-          - op: add
-            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
-            path: /spec/valuesFrom/0
-            value:
-              kind: ConfigMap
-              name: cluster-app-installation-values
-
-    # Rule 3: Immediate backfill on policy create/update — valuesFrom absent.
-    # mutateExistingOnPolicyUpdate fires as soon as the policy lands on the cluster;
-    # the background controller patches all qualifying HelmReleases without waiting for a
-    # periodic background scan.
-    #
-    # match targets this ClusterPolicy by name rather than HelmRelease resources so that:
-    # - Kyverno <= v1.16.x never evaluates target.* variables at HelmRelease admission time
-    #   (ClusterPolicy kind never matches an incoming HelmRelease CREATE/UPDATE request).
-    # - Kyverno >= v1.17.x finds exactly one matching trigger resource (the policy
-    #   itself) when enumerating trigger resources for UpdateRequest creation, so
-    #   UpdateRequests are created for all qualifying HelmReleases in the targets block.
-    - name: init-valuesfrom-list-backfill
-      match:
-        any:
-          - resources:
-              kinds:
-                - ClusterPolicy
-              names:
-                - prepend-cluster-app-config-map-hr
-      # skipBackgroundRequests: false is required so the background controller
-      # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
-      skipBackgroundRequests: false
-      mutate:
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            # Limit the target set to HelmReleases that carry the cluster label, matching the
-            # same selector used in the admission rules.  This prevents the background controller
-            # from fetching (and annotating) unrelated HelmReleases, which would otherwise
-            # trigger chainsaw's SSA conflict-retry loop in tests.
-            selector:
-              matchLabels:
-                app-type: cluster
-            context:
-              - name: ociRepoUrl
-                apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/ocirepositories"
-                  jmesPath: "items[?metadata.name == '{{ `{{` }} target.spec.chartRef.name || '' {{ `}}` }}' && metadata.namespace == '{{ `{{` }} target.spec.chartRef.namespace || target.metadata.namespace {{ `}}` }}'].spec.url | [0] || ''"
-            preconditions:
-              all:
-                - key: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
-                  operator: AnyIn
-                  value:
-                    - "org-*"
-                - key: "{{ `{{` }} target.spec.chartRef.kind || '' {{ `}}` }}"
-                  operator: Equals
-                  value: "OCIRepository"
-                - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
-                  operator: AnyIn
-                  value:
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
-                - key: "{{ `{{` }} target.spec.valuesFrom | to_string(@) {{ `}}` }}"
-                  operator: Equals
-                  value: "null"
-        patchesJson6902: |-
-          - op: add
-            path: /spec/valuesFrom
-            value:
-              - kind: ConfigMap
-                name: cluster-app-installation-values
-
-    # Rule 4: Immediate backfill on policy create/update — valuesFrom exists but entry missing.
-    # Same ClusterPolicy-as-trigger match as rule 3 — see comment above.
-    - name: prepend-to-valuesfrom-list-backfill
-      match:
-        any:
-          - resources:
-              kinds:
-                - ClusterPolicy
-              names:
-                - prepend-cluster-app-config-map-hr
-      skipBackgroundRequests: false
-      mutate:
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            selector:
-              matchLabels:
-                app-type: cluster
-            context:
-              - name: ociRepoUrl
-                apiCall:
-                  urlPath: "/apis/source.toolkit.fluxcd.io/v1/ocirepositories"
-                  jmesPath: "items[?metadata.name == '{{ `{{` }} target.spec.chartRef.name || '' {{ `}}` }}' && metadata.namespace == '{{ `{{` }} target.spec.chartRef.namespace || target.metadata.namespace {{ `}}` }}'].spec.url | [0] || ''"
-            preconditions:
-              all:
-                - key: "{{ `{{` }} target.metadata.namespace {{ `}}` }}"
-                  operator: AnyIn
-                  value:
-                    - "org-*"
-                - key: "{{ `{{` }} target.spec.chartRef.kind || '' {{ `}}` }}"
-                  operator: Equals
-                  value: "OCIRepository"
-                - key: "{{ `{{` }} ociRepoUrl {{ `}}` }}"
-                  operator: AnyIn
-                  value:
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere"
-                    - "oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks"
-                - key: "{{ `{{` }} target.spec.valuesFrom | to_string(@) {{ `}}` }}"
-                  operator: NotEquals
-                  value: "null"
-                - key:
-                    "{{ `{{` }} target.spec.valuesFrom | [?name=='cluster-app-installation-values' && kind=='ConfigMap'] | length(@) {{ `}}` }}"
-                  operator: Equals
-                  value: "0"
-        patchesJson6902: |-
-          - op: add
-            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
-            path: /spec/valuesFrom/0
-            value:
-              kind: ConfigMap
-              name: cluster-app-installation-values
+  # failurePolicy: Ignore is required: resource.Get throws when the referenced
+  # OCIRepository does not (yet) exist, and we must never block HelmRelease
+  # admission on that — the entry is backfilled later via mutateExisting once the
+  # OCIRepository is present and the HelmRelease is reconciled.
+  failurePolicy: Ignore
+  evaluation:
+    admission:
+      enabled: true
+    # mutateExisting is event-driven: backfills all matching existing HelmReleases
+    # whenever any matching HelmRelease is created/updated (and via background
+    # scans). No immediate-on-policy-install backfill exists in Kyverno 1.17.
+    background:
+      enabled: true
+    mutateExisting:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - helm.toolkit.fluxcd.io
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - helmreleases
+    objectSelector:
+      matchLabels:
+        app-type: cluster
+  matchConditions:
+    # Only HelmReleases in org-* namespaces.
+    - name: in-org-namespace
+      expression: "object.metadata.namespace.startsWith('org-')"
+    # Only chartRefs that point to an OCIRepository (with a name to look up).
+    - name: chartref-is-ocirepository
+      expression: >-
+        has(object.spec.chartRef) && has(object.spec.chartRef.kind) &&
+        object.spec.chartRef.kind == 'OCIRepository' && has(object.spec.chartRef.name)
+    # Skip if the ConfigMap entry is already present (idempotent, no duplication).
+    - name: configmap-not-present
+      expression: >-
+        !has(object.spec.valuesFrom) ||
+        !object.spec.valuesFrom.exists(v, has(v.name) && v.name == 'cluster-app-installation-values' && has(v.kind) && v.kind == 'ConfigMap')
+  variables:
+    # Look up the OCIRepository referenced by the HelmRelease's chartRef. The
+    # chartRef namespace defaults to the HelmRelease namespace when unset.
+    # resource.Get throws if the OCIRepository is missing; failurePolicy: Ignore
+    # turns that into a skip (no mutation) rather than an admission failure.
+    - name: repo
+      expression: >-
+        resource.Get("source.toolkit.fluxcd.io/v1", "ocirepositories",
+          has(object.spec.chartRef.namespace) ? object.spec.chartRef.namespace : object.metadata.namespace,
+          object.spec.chartRef.name)
+    - name: url
+      expression: "has(variables.repo.spec.url) ? string(variables.repo.spec.url) : ''"
+    # Only mutate when the chart comes from the known cluster-app registry.
+    - name: allowed
+      expression: >-
+        variables.url in [
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws',
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure',
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director',
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere',
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks'
+        ]
+    - name: entry
+      expression: '{"kind": "ConfigMap", "name": "cluster-app-installation-values"}'
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        # No-op unless the chart is allow-listed. When valuesFrom already exists
+        # (incl. empty []), prepend at index 0; otherwise create the list.
+        expression: >-
+          !variables.allowed ? []
+          : (has(object.spec.valuesFrom)
+              ? [JSONPatch{op: "add", path: "/spec/valuesFrom/0", value: variables.entry}]
+              : [JSONPatch{op: "add", path: "/spec/valuesFrom", value: [variables.entry]}])

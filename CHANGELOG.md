@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add new `prepend-cluster-app-config-map-hr` policy to prepend the `cluster-app-installation-values`
+  ConfigMap to the `valuesFrom` list of cluster HelmReleases.
+
+### Changed
+
+- Migrate the `prepend-cluster-app-config-map` and `prepend-cluster-app-config-map-hr` policies from the
+  deprecated `kyverno.io/v1` `ClusterPolicy` to the new CEL-based `policies.kyverno.io/v1` `MutatingPolicy`
+  (requires Kyverno >= 1.17). Backfill of pre-existing resources is now event-driven via `mutateExisting`
+  (triggered when a matching resource is created/updated, plus background scans) rather than the previous
+  immediate-on-policy-install backfill.
+- Bump the Kyverno version used in the chainsaw and ATS test suites to `v1.17.0` to match the fleet and to
+  provide the `policies.kyverno.io` CRDs required by the migrated policies.
+
 ## [0.15.0-rc.1] - 2026-06-22
 
 ### Added

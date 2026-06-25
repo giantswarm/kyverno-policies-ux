@@ -18,10 +18,9 @@ rules:
       - list
       - watch
       - update
-      - view
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: prepend-cluster-app-config-map
   labels:
@@ -34,167 +33,57 @@ metadata:
       Checks if the 'cluster-app-installation-values' ConfigMap is in the extraConfigs list of a cluster-* App
       CR, and if not, prepends it as the first entry.
 spec:
-  background: true
-  rules:
-    # Rule 1: extraConfigs is absent (null) — create the field with the entry as the only element.
-    # JSON Patch op:add at a numeric index requires the parent array to already exist, so we
-    # must initialise it in a separate rule rather than patching at /spec/extraConfigs/0.
-    - name: init-extraconfigs-list
-      match:
-        any:
-          - resources:
-              kinds:
-                - App
-      # Also run during periodic background scans so pre-existing Apps without
-      # extraConfigs are backfilled automatically (no manual touch required).
-      skipBackgroundRequests: false
-      preconditions:
-        all:
-          - key: "{{ request.object.spec.name }}"
-            operator: AnyIn
-            value:
-              - cluster-aws
-              - cluster-azure
-              - cluster-cloud-director
-              - cluster-vsphere
-              - cluster-eks
-          - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
-            operator: Equals
-            value: "null"
-      mutate:
-        patchesJson6902: |-
-          - op: add
-            path: /spec/extraConfigs
-            value:
-              - kind: configMap
-                name: cluster-app-installation-values
-                namespace: "{{ request.object.metadata.namespace }}"
-                priority: 10
-
-    # Rule 2: extraConfigs exists (possibly empty []) but does not yet contain the entry — prepend.
-    - name: prepend-to-extraconfigs-list
-      match:
-        any:
-          - resources:
-              kinds:
-                - App
-      # Also run during periodic background scans to backfill existing Apps.
-      skipBackgroundRequests: false
-      preconditions:
-        all:
-          - key: "{{ request.object.spec.name }}"
-            operator: AnyIn
-            value:
-              - cluster-aws
-              - cluster-azure
-              - cluster-cloud-director
-              - cluster-vsphere
-              - cluster-eks
-          - key: "{{ request.object.spec.extraConfigs | to_string(@) }}"
-            operator: NotEquals
-            value: "null"
-          - key:
-              "{{ request.object.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) }}"
-            operator: Equals
-            value: "0"
-      mutate:
-        patchesJson6902: |-
-          - op: add
-            # The path /0 instructs Kyverno to insert the value at index 0 (prepend).
-            path: /spec/extraConfigs/0
-            value:
-              kind: configMap
-              name: cluster-app-installation-values
-              namespace: "{{ request.object.metadata.namespace }}"
-              priority: 10
-
-    # Rule 3: Immediate backfill on policy create/update — extraConfigs absent.
-    # mutateExistingOnPolicyUpdate fires as soon as the policy lands on the cluster;
-    # the background controller patches all qualifying Apps without waiting for a
-    # periodic background scan.
-    #
-    # match targets this ClusterPolicy by name rather than App resources so that:
-    # - Kyverno ≤ v1.16.x never evaluates target.* variables at App admission time
-    #   (ClusterPolicy kind never matches an incoming App CREATE/UPDATE request).
-    # - Kyverno ≥ v1.17.x finds exactly one matching trigger resource (the policy
-    #   itself) when enumerating trigger resources for UpdateRequest creation, so
-    #   UpdateRequests are created for all qualifying Apps in the targets block.
-    - name: init-extraconfigs-list-backfill
-      match:
-        any:
-          - resources:
-              kinds:
-                - ClusterPolicy
-              names:
-                - prepend-cluster-app-config-map
-      # skipBackgroundRequests: false is required so the background controller
-      # actually processes the UpdateRequests that mutateExistingOnPolicyUpdate creates.
-      skipBackgroundRequests: false
-      mutate:
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: application.giantswarm.io/v1alpha1
-            kind: App
-            preconditions:
-              all:
-                - key: "{{ target.spec.name }}"
-                  operator: AnyIn
-                  value:
-                    - cluster-aws
-                    - cluster-azure
-                    - cluster-cloud-director
-                    - cluster-vsphere
-                    - cluster-eks
-                - key: "{{ target.spec.extraConfigs | to_string(@) }}"
-                  operator: Equals
-                  value: "null"
-        patchesJson6902: |-
-          - op: add
-            path: /spec/extraConfigs
-            value:
-              - kind: configMap
-                name: cluster-app-installation-values
-                namespace: "{{ target.metadata.namespace }}"
-                priority: 10
-
-    # Rule 4: Immediate backfill on policy create/update — extraConfigs exists but entry missing.
-    # Same ClusterPolicy-as-trigger match as rule 3 — see comment above.
-    - name: prepend-to-extraconfigs-list-backfill
-      match:
-        any:
-          - resources:
-              kinds:
-                - ClusterPolicy
-              names:
-                - prepend-cluster-app-config-map
-      skipBackgroundRequests: false
-      mutate:
-        mutateExistingOnPolicyUpdate: true
-        targets:
-          - apiVersion: application.giantswarm.io/v1alpha1
-            kind: App
-            preconditions:
-              all:
-                - key: "{{ target.spec.name }}"
-                  operator: AnyIn
-                  value:
-                    - cluster-aws
-                    - cluster-azure
-                    - cluster-cloud-director
-                    - cluster-vsphere
-                    - cluster-eks
-                - key: "{{ target.spec.extraConfigs | to_string(@) }}"
-                  operator: NotEquals
-                  value: "null"
-                - key:
-                    "{{ target.spec.extraConfigs | [?name=='cluster-app-installation-values'] | length(@) }}"
-                  operator: Equals
-                  value: "0"
-        patchesJson6902: |-
-          - op: add
-            path: /spec/extraConfigs/0
-            value:
-              kind: configMap
-              name: cluster-app-installation-values
-              namespace: "{{ target.metadata.namespace }}"
-              priority: 10
+  # failurePolicy: Ignore so a mutation/evaluation error never blocks App admission;
+  # the entry is still backfilled later via mutateExisting / background.
+  failurePolicy: Ignore
+  evaluation:
+    # admission: mutate new/updated Apps inline at admission time.
+    admission:
+      enabled: true
+    # background + mutateExisting: backfill pre-existing Apps. mutateExisting is
+    # event-driven — when any matching App is created/updated, all existing
+    # matching Apps are (re)evaluated and backfilled. There is no Kyverno-1.17
+    # equivalent of the old ClusterPolicy `mutateExistingOnPolicyUpdate`
+    # immediate-on-install backfill.
+    background:
+      enabled: true
+    mutateExisting:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - application.giantswarm.io
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - apps
+  matchConditions:
+    # Only cluster-* provider charts.
+    - name: cluster-app-name
+      expression: >-
+        has(object.spec) && has(object.spec.name) &&
+        object.spec.name in ['cluster-aws', 'cluster-azure', 'cluster-cloud-director', 'cluster-vsphere', 'cluster-eks']
+    # Skip if the ConfigMap entry is already present (idempotent, no duplication).
+    - name: configmap-not-present
+      expression: >-
+        !has(object.spec.extraConfigs) ||
+        !object.spec.extraConfigs.exists(e, has(e.name) && e.name == 'cluster-app-installation-values')
+  variables:
+    # The entry to prepend. dyn() forces a map(string, dyn) so the heterogeneous
+    # values (string namespace from the object + int priority) compile under CEL.
+    - name: entry
+      expression: >-
+        {"kind": dyn("configMap"), "name": dyn("cluster-app-installation-values"), "namespace": dyn(object.metadata.namespace), "priority": dyn(10)}
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        # When extraConfigs already exists (incl. empty []), prepend at index 0.
+        # When it is absent, create the list with the entry as the only element —
+        # a JSON Patch add at a numeric index requires the parent array to exist.
+        expression: >-
+          has(object.spec.extraConfigs)
+          ? [JSONPatch{op: "add", path: "/spec/extraConfigs/0", value: variables.entry}]
+          : [JSONPatch{op: "add", path: "/spec/extraConfigs", value: [variables.entry]}]
