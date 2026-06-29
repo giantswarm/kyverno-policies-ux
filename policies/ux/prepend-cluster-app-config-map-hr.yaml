@@ -39,8 +39,8 @@ metadata:
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >
       Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a HelmRelease
-      with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef points to an OCIRepository
-      with a URL from the known cluster-app registry, and if not, prepends it as the first entry.
+      in an org-* namespace whose spec.chartRef points to an OCIRepository with a URL from the known
+      cluster-app registry, and if not, prepends it as the first entry.
 spec:
   # failurePolicy: Ignore is required: resource.Get throws when the referenced
   # OCIRepository does not (yet) exist, and we must never block HelmRelease
@@ -68,9 +68,6 @@ spec:
           - UPDATE
         resources:
           - helmreleases
-    objectSelector:
-      matchLabels:
-        app-type: cluster
   matchConditions:
     # Only HelmReleases in org-* namespaces.
     - name: in-org-namespace

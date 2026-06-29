@@ -129,8 +129,6 @@ spec:
           metadata:
             name: hr-no-values-from
             namespace: org-chainsaw-prepend-hr
-            labels:
-              app-type: cluster
           spec:
             interval: 10m
             chartRef:
@@ -169,8 +167,6 @@ spec:
           metadata:
             name: hr-with-other-values
             namespace: org-chainsaw-prepend-hr
-            labels:
-              app-type: cluster
           spec:
             interval: 10m
             chartRef:
@@ -220,8 +216,6 @@ spec:
           metadata:
             name: hr-already-has-configmap
             namespace: org-chainsaw-prepend-hr
-            labels:
-              app-type: cluster
           spec:
             interval: 10m
             chartRef:
@@ -256,8 +250,6 @@ spec:
           metadata:
             name: hr-non-allowlist-oci
             namespace: org-chainsaw-prepend-hr
-            labels:
-              app-type: cluster
           spec:
             interval: 10m
             chartRef:
@@ -289,8 +281,6 @@ spec:
           metadata:
             name: hr-non-org
             namespace: non-org-chainsaw-prepend-hr
-            labels:
-              app-type: cluster
           spec:
             interval: 10m
           EOF
@@ -302,30 +292,6 @@ spec:
             exit 1
           fi
           echo "OK: no mutation for HR in non-org namespace"
-
-  # HR in org-* namespace but without the app-type: cluster label — must not be mutated
-  # Uses kubectl apply via script (not chainsaw apply) — same reason as no-mutation-outside-org-namespace.
-  - name: no-mutation-without-cluster-label
-    try:
-    - script:
-        content: |
-          kubectl apply -f - <<'EOF'
-          apiVersion: helm.toolkit.fluxcd.io/v2
-          kind: HelmRelease
-          metadata:
-            name: hr-no-cluster-label
-            namespace: org-chainsaw-prepend-hr
-          spec:
-            interval: 10m
-          EOF
-          sleep 3
-          values_from=$(kubectl get helmrelease hr-no-cluster-label -n org-chainsaw-prepend-hr \
-            -o jsonpath='{.spec.valuesFrom}' 2>/dev/null || echo "")
-          if echo "$values_from" | grep -q "cluster-app-installation-values"; then
-            echo "ERROR: ConfigMap was added to HR without app-type: cluster label"
-            exit 1
-          fi
-          echo "OK: no mutation for HR without app-type: cluster label"
 
   - name: cleanup-external-resources
     try:
