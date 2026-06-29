@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.15.0-rc.2] - 2026-06-29
+
+### Changed
+
+- Updated the rules added in the RC previously
+
 ## [0.15.0-rc.1] - 2026-06-22
 
 ### Added
@@ -242,7 +248,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.1...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.2...HEAD
+[0.15.0-rc.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.1...v0.15.0-rc.2
 [0.15.0-rc.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.14.0...v0.15.0-rc.1
 [0.14.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.13.1...v0.13.2
