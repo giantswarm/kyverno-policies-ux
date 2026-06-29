@@ -107,7 +107,8 @@ spec:
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere',
-          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks'
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks',
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-aks'
         ]
     - name: entry
       expression: '{"kind": "ConfigMap", "name": "cluster-app-installation-values"}'
