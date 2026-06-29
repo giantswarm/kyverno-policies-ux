@@ -64,19 +64,20 @@ spec:
     # Only cluster-* provider charts.
     - name: cluster-app-name
       expression: >-
-        has(object.spec) && has(object.spec.name) &&
-        object.spec.name in ['cluster-aws', 'cluster-azure', 'cluster-cloud-director', 'cluster-vsphere', 'cluster-eks']
+        has(object.spec) && has(object.spec.name) && object.spec.name in ['cluster-aks', 'cluster-aws',
+        'cluster-azure', 'cluster-cloud-director', 'cluster-vsphere', 'cluster-eks']
     # Skip if the ConfigMap entry is already present (idempotent, no duplication).
     - name: configmap-not-present
       expression: >-
-        !has(object.spec.extraConfigs) ||
-        !object.spec.extraConfigs.exists(e, has(e.name) && e.name == 'cluster-app-installation-values')
+        !has(object.spec.extraConfigs) || !object.spec.extraConfigs.exists(e, has(e.name) && e.name ==
+        'cluster-app-installation-values')
   variables:
     # The entry to prepend. dyn() forces a map(string, dyn) so the heterogeneous
     # values (string namespace from the object + int priority) compile under CEL.
     - name: entry
       expression: >-
-        {"kind": dyn("configMap"), "name": dyn("cluster-app-installation-values"), "namespace": dyn(object.metadata.namespace), "priority": dyn(10)}
+        {"kind": dyn("configMap"), "name": dyn("cluster-app-installation-values"), "namespace":
+        dyn(object.metadata.namespace), "priority": dyn(10)}
   mutations:
     - patchType: JSONPatch
       jsonPatch:
@@ -84,6 +85,5 @@ spec:
         # When it is absent, create the list with the entry as the only element —
         # a JSON Patch add at a numeric index requires the parent array to exist.
         expression: >-
-          has(object.spec.extraConfigs)
-          ? [JSONPatch{op: "add", path: "/spec/extraConfigs/0", value: variables.entry}]
-          : [JSONPatch{op: "add", path: "/spec/extraConfigs", value: [variables.entry]}]
+          has(object.spec.extraConfigs) ? [JSONPatch{op: "add", path: "/spec/extraConfigs/0", value:
+          variables.entry}] : [JSONPatch{op: "add", path: "/spec/extraConfigs", value: [variables.entry]}]

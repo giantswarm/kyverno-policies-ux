@@ -39,10 +39,9 @@ metadata:
       Prepend 'cluster-app-installation-values' ConfigMap to HelmRelease valuesFrom for cluster HelmReleases
     policies.kyverno.io/subject: HelmRelease
     policies.kyverno.io/description: >
-      Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a
-      HelmRelease with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef
-      points to an OCIRepository with a URL from the known cluster-app registry, and if not,
-      prepends it as the first entry.
+      Checks if the 'cluster-app-installation-values' ConfigMap is in the valuesFrom list of a HelmRelease
+      with the 'app-type: cluster' label in an org-* namespace whose spec.chartRef points to an OCIRepository
+      with a URL from the known cluster-app registry, and if not, prepends it as the first entry.
 spec:
   # failurePolicy: Ignore is required: resource.Get throws when the referenced
   # OCIRepository does not (yet) exist, and we must never block HelmRelease
@@ -80,13 +79,13 @@ spec:
     # Only chartRefs that point to an OCIRepository (with a name to look up).
     - name: chartref-is-ocirepository
       expression: >-
-        has(object.spec.chartRef) && has(object.spec.chartRef.kind) &&
-        object.spec.chartRef.kind == 'OCIRepository' && has(object.spec.chartRef.name)
+        has(object.spec.chartRef) && has(object.spec.chartRef.kind) && object.spec.chartRef.kind ==
+        'OCIRepository' && has(object.spec.chartRef.name)
     # Skip if the ConfigMap entry is already present (idempotent, no duplication).
     - name: configmap-not-present
       expression: >-
-        !has(object.spec.valuesFrom) ||
-        !object.spec.valuesFrom.exists(v, has(v.name) && v.name == 'cluster-app-installation-values' && has(v.kind) && v.kind == 'ConfigMap')
+        !has(object.spec.valuesFrom) || !object.spec.valuesFrom.exists(v, has(v.name) && v.name ==
+        'cluster-app-installation-values' && has(v.kind) && v.kind == 'ConfigMap')
   variables:
     # Look up the OCIRepository referenced by the HelmRelease's chartRef. The
     # chartRef namespace defaults to the HelmRelease namespace when unset.
@@ -103,12 +102,12 @@ spec:
     - name: allowed
       expression: >-
         variables.url in [
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-aks',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-azure',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-cloud-director',
           'oci://gsoci.azurecr.io/charts/giantswarm/cluster-vsphere',
-          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks',
-          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-aks'
+          'oci://gsoci.azurecr.io/charts/giantswarm/cluster-eks'
         ]
     - name: entry
       expression: '{"kind": "ConfigMap", "name": "cluster-app-installation-values"}'
@@ -118,7 +117,6 @@ spec:
         # No-op unless the chart is allow-listed. When valuesFrom already exists
         # (incl. empty []), prepend at index 0; otherwise create the list.
         expression: >-
-          !variables.allowed ? []
-          : (has(object.spec.valuesFrom)
+          !variables.allowed ? [] : (has(object.spec.valuesFrom)
               ? [JSONPatch{op: "add", path: "/spec/valuesFrom/0", value: variables.entry}]
               : [JSONPatch{op: "add", path: "/spec/valuesFrom", value: [variables.entry]}])
