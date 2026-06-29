@@ -65,8 +65,8 @@ spec:
     # Only cluster-* provider charts.
     - name: cluster-app-name
       expression: >-
-        has(object.spec) && has(object.spec.name) && object.spec.name in ['cluster-aks', 'cluster-aws',
-        'cluster-azure', 'cluster-cloud-director', 'cluster-vsphere', 'cluster-eks']
+        has(object.spec) && has(object.spec.name) && object.spec.name in ['cluster-proxmox', 'cluster-aks',
+        'cluster-aws', 'cluster-azure', 'cluster-cloud-director', 'cluster-vsphere', 'cluster-eks']
     # Skip if the ConfigMap entry is already present (idempotent, no duplication).
     - name: configmap-not-present
       expression: >-
