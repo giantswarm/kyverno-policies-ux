@@ -39,12 +39,17 @@ spec:
           EOF
 
   - name: check-policy-ready
-    use:
-      template: ../_steps-templates/cluster-policy-ready.yaml
-      with:
-        bindings:
-        - name: name
-          value: prepend-cluster-app-config-map
+    try:
+    - assert:
+        timeout: 60s
+        resource:
+          apiVersion: policies.kyverno.io/v1
+          kind: MutatingPolicy
+          metadata:
+            name: prepend-cluster-app-config-map
+          status:
+            conditionStatus:
+              ready: true
 
   # App with spec.name=cluster-aws and no extraConfigs field at all — init-extraconfigs-list rule must fire
   - name: prepend-when-extraConfigs-missing

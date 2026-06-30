@@ -42,6 +42,37 @@ spec:
       status: {}
 EOF
 
+# HelmRelease CRD from fluxcd/helm-controller (used by prepend-cluster-app-config-map-hr)
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/helm-controller/refs/heads/main/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml
+
+# OCIRepository CRD — must be installed before policies so the apiCall context in
+# prepend-cluster-app-config-map-hr can resolve /apis/source.toolkit.fluxcd.io/v1/ocirepositories
+kubectl apply -f - <<'EOF'
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ocirepositories.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: OCIRepository
+    listKind: OCIRepositoryList
+    plural: ocirepositories
+    singular: ocirepository
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+    subresources:
+      status: {}
+EOF
+kubectl wait --for condition=established --timeout=30s crd/ocirepositories.source.toolkit.fluxcd.io
+
 # Create giantswarm namespace and source ConfigMap so they exist before the policy is installed.
 # The sync-cluster-app-configmap-to-org-namespaces policy uses clone+sync which requires the
 # source to be present at policy-apply time for Kyverno to set up its internal watch correctly.
