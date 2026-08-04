@@ -12,25 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add new `prepend-cluster-app-config-map` policy to automatically prepend the `cluster-app-config` ConfigMap
-  to the list of config maps in cluster app definitions.
+  to the list of config maps in cluster app definitions. (disabled for now, but already tested)
 - Add new `prepend-cluster-app-config-map-hr` policy to prepend the `cluster-app-installation-values`
   ConfigMap to the `valuesFrom` list of cluster HelmReleases.
-
-### Changed
-
-- This release aggregates all changes from release candidates 0.15.0-rc.1 through 0.15.0-rc.4.
-- Updated the rules added in the RC previously
-- Migrate the `prepend-cluster-app-config-map` and `prepend-cluster-app-config-map-hr` policies from the
-  deprecated `kyverno.io/v1` `ClusterPolicy` to the new CEL-based `policies.kyverno.io/v1` `MutatingPolicy`
-  (requires Kyverno >= 1.17). Backfill of pre-existing resources is now event-driven via `mutateExisting`
-  (triggered when a matching resource is created/updated, plus background scans) rather than the previous
-  immediate-on-policy-install backfill.
-- Bump the Kyverno version used in the chainsaw and ATS test suites to `v1.17.0` to match the fleet and to
-  provide the `policies.kyverno.io` CRDs required by the migrated policies.
-- Temporarily disable the `prepend-cluster-app-config-map` policy (App CRs) by commenting it out. The
-  `cluster-app-installation-values` ConfigMap injection stays active only for HelmReleases via
-  `prepend-cluster-app-config-map-hr`. The commented-out policy is kept in the repository and will either be
-  re-enabled or removed depending on the progress of the App CR to HelmRelease migration.
 
 ## [0.15.0-rc.4] - 2026-08-04
 
@@ -57,7 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   immediate-on-policy-install backfill.
 - Bump the Kyverno version used in the chainsaw and ATS test suites to `v1.17.0` to match the fleet and to
   provide the `policies.kyverno.io` CRDs required by the migrated policies.
-  
+
 ## [0.15.0-rc.2] - 2026-06-29
 
 ### Changed
