@@ -4,9 +4,11 @@ set -euo pipefail
 
 # Install CRDs required for Chainsaw tests
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/config/crd/bases/cluster.x-k8s.io_clusters.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/config/crd/bases/cluster.x-k8s.io_machinepools.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/config/crd/bases/cluster.x-k8s.io_machinedeployments.yaml
+# Core cluster.x-k8s.io CRDs. Upstream moved these from config/crd/bases to core/config/crd/bases
+# in cluster-api main; the kubeadm control plane provider path is unchanged.
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/core/config/crd/bases/cluster.x-k8s.io_clusters.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/core/config/crd/bases/cluster.x-k8s.io_machinepools.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/core/config/crd/bases/cluster.x-k8s.io_machinedeployments.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/heads/main/controlplane/kubeadm/config/crd/bases/controlplane.cluster.x-k8s.io_kubeadmcontrolplanes.yaml
 
 # AWSCluster CRD from CAPA (used by block-infracluster-deletion-if-has-controlplane, capa only)
