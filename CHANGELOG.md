@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Temporarily disable the `prepend-cluster-app-config-map` policy (App CRs) by commenting it out. The
+  `cluster-app-installation-values` ConfigMap injection stays active only for HelmReleases via
+  `prepend-cluster-app-config-map-hr`. The commented-out policy is kept in the repository and will either be
+  re-enabled or removed depending on the progress of the App CR to HelmRelease migration.
+
 ## [0.15.0-rc.3] - 2026-06-30
 
 ### Added

@@ -3,6 +3,12 @@ kind: Test
 metadata:
   name: prepend-cluster-app-config-map
 spec:
+  # TEMPORARILY SKIPPED, together with the policy it tests — see
+  # policies/ux/prepend-cluster-app-config-map.yaml, which is commented out because we only want
+  # the ConfigMap injection active for HelmReleases for now. Remove this `skip` when the policy is
+  # uncommented, or delete this test along with the policy once the App CR -> HelmRelease migration
+  # makes it obsolete.
+  skip: true
   steps:
   - name: install-app-crd
     try:
