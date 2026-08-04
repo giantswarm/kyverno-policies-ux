@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-08-04
+
+### Added
+
+- Add new `prepend-cluster-app-config-map` policy to automatically prepend the `cluster-app-config` ConfigMap
+  to the list of config maps in cluster app definitions. (disabled for now, but already tested)
+- Add new `prepend-cluster-app-config-map-hr` policy to prepend the `cluster-app-installation-values`
+  ConfigMap to the `valuesFrom` list of cluster HelmReleases.
+
 ## [0.15.0-rc.4] - 2026-08-04
 
 ### Changed
@@ -32,7 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   immediate-on-policy-install backfill.
 - Bump the Kyverno version used in the chainsaw and ATS test suites to `v1.17.0` to match the fleet and to
   provide the `policies.kyverno.io` CRDs required by the migrated policies.
-  
+
 ## [0.15.0-rc.2] - 2026-06-29
 
 ### Changed
@@ -274,7 +283,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.4...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.4...v0.15.0
 [0.15.0-rc.4]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.3...v0.15.0-rc.4
 [0.15.0-rc.3]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.2...v0.15.0-rc.3
 [0.15.0-rc.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.1...v0.15.0-rc.2
