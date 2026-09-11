@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Extend the `prepend-cluster-app-config-map-hr` allow-list with the `release-*` chart variants (aks, aws,
+  azure, cloud-director, eks, proxmox, vsphere) alongside the existing `cluster-*` ones. Clusters
+  provisioned via a `release-*` OCI chart (e.g. `release-aws`) were silently skipped by the policy.
+
 ## [0.15.0] - 2026-08-04
 
 ### Added

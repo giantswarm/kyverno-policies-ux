@@ -107,6 +107,17 @@ spec:
           spec:
             url: "oci://gsoci.azurecr.io/charts/giantswarm/cluster-aws"
             interval: 10m
+    # OCIRepository with a release-* allowlisted URL (added in PR #245)
+    - apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: release-aws
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            url: "oci://gsoci.azurecr.io/charts/giantswarm/release-aws"
+            interval: 10m
     # OCIRepository with a URL outside the allowlist — used for the negative test
     - apply:
         resource:
@@ -156,6 +167,35 @@ spec:
             exit 1
           fi
           echo "OK: cluster-app-installation-values is at index 0"
+
+  # HR with spec.chartRef → valid release-* OCIRepository, no valuesFrom — rule 1 must fire
+  - name: prepend-for-release-chart-variant
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-release-variant
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            interval: 10m
+            chartRef:
+              kind: OCIRepository
+              name: release-aws
+              namespace: org-chainsaw-prepend-hr
+    - assert:
+        timeout: 30s
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-release-variant
+            namespace: org-chainsaw-prepend-hr
+          spec:
+            valuesFrom:
+            - kind: ConfigMap
+              name: cluster-app-installation-values
 
   # HR with spec.chartRef → valid OCIRepository, existing valuesFrom — ConfigMap must be at index 0
   - name: prepend-before-existing-valuesFrom-entries
