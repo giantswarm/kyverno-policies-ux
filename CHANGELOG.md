@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add `AzureASOManagedCluster`, `AzureASOManagedControlPlane` and `AzureASOManagedMachinePool` to the `block-resource-deletion-if-has-prevent-deletion-label` policy.
+
 ## [0.15.1] - 2026-09-11
 
 ### Changed

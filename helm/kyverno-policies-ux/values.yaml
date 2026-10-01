@@ -11,6 +11,9 @@ preventDeletionLabelPolicy:
     - AWSCluster
     - AWSControlPlane
     - AWSMachineDeployment
+    - AzureASOManagedCluster
+    - AzureASOManagedControlPlane
+    - AzureASOManagedMachinePool
     - AzureCluster
     - AzureMachinePool
     - ConfigMap
