@@ -42,8 +42,7 @@ We have tried to make the test setup as simple as possible but some python knowl
 
 The tests use [python fixtures](https://docs.pytest.org/en/6.2.x/fixture.html) extensively to set up any resources we need in our tests.
 
-All fixtures can be found in [ensure.py](https://github.com/giantswarm/kyverno-policies-ux/blob/main/helm/tests/ensure.py).
-Each fixtures should be structured in a similar way. Let's follow an example for `AWSCluster`:
+Each fixture should be structured in a similar way. Let's follow an example for `AWSCluster`:
 ```python
 @pytest.fixture
 def awscluster(kubernetes_cluster):
