@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Query `cluster.x-k8s.io` and `controlplane.cluster.x-k8s.io` resources through `v1beta2` in `apiCall` contexts,
   ahead of upstream Cluster API no longer serving `v1beta1`.
+- List each kind only once in the `block-resource-deletion-if-has-prevent-deletion-label` policy, even if the
+  cluster serves it in several API versions.
 
 ### Fixed
 
