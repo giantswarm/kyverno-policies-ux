@@ -21,4 +21,4 @@ preventDeletionLabelPolicy:
     - Secret
     - ConfigMap
   gvk:
-    - cluster.x-k8s.io/v1beta2/Cluster
+    - cluster.x-k8s.io/*/Cluster

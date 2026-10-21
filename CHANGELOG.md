@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add `AzureASOManagedCluster`, `AzureASOManagedControlPlane` and `AzureASOManagedMachinePool` to the `block-resource-deletion-if-has-prevent-deletion-label` policy.
 
+### Fixed
+
+- Match `cluster.x-k8s.io/*/Cluster` in the `block-resource-deletion-if-has-prevent-deletion-label` policy, so
+  that deleting a `Cluster` through `v1beta1` (e.g. Helm uninstall of `cluster` chart versions before 6.0.0) no
+  longer bypasses the `giantswarm.io/prevent-deletion` label.
+- Match `cluster.x-k8s.io/*/Cluster` in the `cluster-names` policy, so that it also applies to `v1beta2` requests.
+- Match `cluster.x-k8s.io/*/Cluster` in the `restrict-cluster-label-service-priority` policy, so that it also
+  applies to `v1beta1` requests.
+
 ## [0.15.1] - 2026-09-11
 
 ### Changed
