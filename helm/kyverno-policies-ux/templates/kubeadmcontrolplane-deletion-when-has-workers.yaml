@@ -29,11 +29,11 @@ spec:
             jmesPath: "request.oldObject.metadata.namespace || ''"
         - name: machinePoolCount
           apiCall:
-            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinepools?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
+            urlPath: "/apis/cluster.x-k8s.io/v1beta2/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinepools?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
             jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
         - name: machineDeploymentCount
           apiCall:
-            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinedeployments?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
+            urlPath: "/apis/cluster.x-k8s.io/v1beta2/namespaces/{{ `{{` }}namespace{{ `}}` }}/machinedeployments?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
             jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
         - name: totalWorkerCount
           variable:

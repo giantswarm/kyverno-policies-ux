@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add `AzureASOManagedCluster`, `AzureASOManagedControlPlane` and `AzureASOManagedMachinePool` to the `block-resource-deletion-if-has-prevent-deletion-label` policy.
 
+### Changed
+
+- Query `cluster.x-k8s.io` and `controlplane.cluster.x-k8s.io` resources through `v1beta2` in `apiCall` contexts,
+  ahead of upstream Cluster API no longer serving `v1beta1`.
+
 ### Fixed
 
 - Match `cluster.x-k8s.io/*/Cluster` in the `block-resource-deletion-if-has-prevent-deletion-label` policy, so
