@@ -21,7 +21,7 @@ spec:
       context:
         - name: clusterCount
           apiCall:
-            urlPath: "/apis/cluster.x-k8s.io/v1beta1/namespaces/{{request.oldObject.status.namespace || ''}}/clusters"
+            urlPath: "/apis/cluster.x-k8s.io/v1beta2/namespaces/{{request.oldObject.status.namespace || ''}}/clusters"
             jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
       preconditions:
         all:

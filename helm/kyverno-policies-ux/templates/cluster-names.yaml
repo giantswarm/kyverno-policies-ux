@@ -16,7 +16,8 @@ spec:
       any:
       - resources:
           kinds:
-          - cluster.x-k8s.io/v1beta1/Cluster
+          # Wildcard version because Kyverno only matches requests sent through a listed API version
+          - cluster.x-k8s.io/*/Cluster
     validate:
       message: "cluster name must be no longer than 20 characters"
       deny:

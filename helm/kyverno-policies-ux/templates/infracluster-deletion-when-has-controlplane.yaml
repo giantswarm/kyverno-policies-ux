@@ -29,7 +29,7 @@ spec:
             jmesPath: "request.oldObject.metadata.namespace || ''"
         - name: controlPlaneCount
           apiCall:
-            urlPath: "/apis/controlplane.cluster.x-k8s.io/v1beta1/namespaces/{{ `{{` }}namespace{{ `}}` }}/kubeadmcontrolplanes?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
+            urlPath: "/apis/controlplane.cluster.x-k8s.io/v1beta2/namespaces/{{ `{{` }}namespace{{ `}}` }}/kubeadmcontrolplanes?labelSelector=cluster.x-k8s.io/cluster-name={{ `{{` }}clusterName{{ `}}` }}"
             jmesPath: "items[?metadata.deletionTimestamp==null] | length(@)"
       preconditions:
         all:

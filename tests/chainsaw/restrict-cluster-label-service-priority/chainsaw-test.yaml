@@ -55,7 +55,7 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           metadata:
-            name: cluster-priority-highest
+            name: priority-highest
             labels:
               giantswarm.io/service-priority: highest
           spec: {}
@@ -67,7 +67,7 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           metadata:
-            name: cluster-priority-medium
+            name: priority-medium
             labels:
               giantswarm.io/service-priority: medium
           spec: {}
@@ -79,7 +79,7 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           metadata:
-            name: cluster-priority-lowest
+            name: priority-lowest
             labels:
               giantswarm.io/service-priority: lowest
           spec: {}
@@ -91,7 +91,7 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           metadata:
-            name: cluster-no-priority-label
+            name: no-priority-label
           spec: {}
 
   - name: deny-invalid-service-priority
@@ -104,7 +104,44 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           metadata:
-            name: cluster-priority-critical
+            name: priority-critical
+            labels:
+              giantswarm.io/service-priority: critical
+          spec: {}
+
+  - name: allow-service-priority-medium-v1beta1
+    try:
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: v1beta1-medium
+            labels:
+              giantswarm.io/service-priority: medium
+          spec: {}
+
+  - name: allow-no-service-priority-label-v1beta1
+    try:
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: v1beta1-no-priority
+          spec: {}
+
+  - name: deny-invalid-service-priority-v1beta1
+    try:
+    - apply:
+        expect:
+        - check:
+            ($error != null): true
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: v1beta1-critical
             labels:
               giantswarm.io/service-priority: critical
           spec: {}

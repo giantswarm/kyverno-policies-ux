@@ -70,3 +70,26 @@ spec:
           metadata:
             name: this-name-is-too-long-x
           spec: {}
+
+  - name: allow-valid-cluster-name-v1beta2
+    try:
+    - apply:
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta2
+          kind: Cluster
+          metadata:
+            name: short-cluster-2
+          spec: {}
+
+  - name: deny-cluster-name-too-long-v1beta2
+    try:
+    - apply:
+        expect:
+        - check:
+            ($error != null): true
+        resource:
+          apiVersion: cluster.x-k8s.io/v1beta2
+          kind: Cluster
+          metadata:
+            name: this-name-is-too-long-y
+          spec: {}

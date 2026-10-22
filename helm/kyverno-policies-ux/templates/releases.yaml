@@ -29,7 +29,7 @@ spec:
             jmesPath: "split(request.name, '-')[1:] | join('-', @)"
         - name: clustersUsingRelease
           apiCall:
-            urlPath: "/apis/cluster.x-k8s.io/v1beta1/clusters"
+            urlPath: "/apis/cluster.x-k8s.io/v1beta2/clusters"
             jmesPath: 'items[?metadata.labels."release.giantswarm.io/version" == ''{{ `{{` }} releaseVersion {{ `}}` }}''].metadata.name'
       validate:
         message: "Cannot delete release {{ `{{` }} releaseName {{ `}}` }} because it is still being used by these clusters: {{ `{{` }} clustersUsingRelease {{ `}}` }}"

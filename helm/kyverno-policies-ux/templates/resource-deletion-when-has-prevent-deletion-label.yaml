@@ -23,13 +23,17 @@ spec:
           kinds:
 {{- range .Values.preventDeletionLabelPolicy.resources }}
   {{- $resource := . -}}
+  {{- $served := false -}}
   {{- range $.Capabilities.APIVersions }}
     {{- if eq (last (splitList "/" .)) $resource }}
-          - {{ $resource }}
+      {{- $served = true }}
     {{- end }}
   {{- end }}
+  {{- if $served }}
+          - {{ $resource }}
+  {{- end }}
 {{- end }}
-    # Needed for resources that have duplicated names across different apiGroups, eg: cluster.postgresql.org/v1/Cluster and cluster.x-k8s.io/v1beta2/Cluster
+    # Needed for resources that have duplicated names across different apiGroups, eg: `cluster.postgresql.org/v1/Cluster` and `cluster.x-k8s.io/*/Cluster`
 {{- range .Values.preventDeletionLabelPolicy.gvk }}
           - {{ . }}
 {{- end }}
