@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-06
+
 ### Added
 
 - Add `HelmRelease` and `OCIRepository` to the `block-resource-deletion-if-has-prevent-deletion-label` policy, so clusters deployed as Flux HelmReleases keep the deletion protection they had as App CRs.
@@ -317,7 +319,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial policies moved from [`kyverno-policies`](https://github.com/giantswarm/kyverno-policies).
 - Push to AWS, Azure, KVM, and OpenStack collections.
 
-[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.2...HEAD
+[Unreleased]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.2...v0.16.0
 [0.15.2]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/giantswarm/kyverno-policies-ux/compare/v0.15.0-rc.4...v0.15.0
