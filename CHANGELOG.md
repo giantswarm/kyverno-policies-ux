@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Register the `block-resource-deletion-if-has-prevent-deletion-label` policy for `DELETE` requests only, and let the
+  API server skip deletions of objects without the `giantswarm.io/prevent-deletion` label through webhook `matchConditions`.
+
 ## [0.16.0] - 2026-11-06
 
 ### Added

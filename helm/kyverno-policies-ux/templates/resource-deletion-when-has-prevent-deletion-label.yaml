@@ -15,6 +15,12 @@ metadata:
 spec:
   validationFailureAction: Enforce
   background: false
+  webhookConfiguration:
+    matchConditions:
+    - name: has-prevent-deletion-label
+      expression: >-
+        has(oldObject.metadata.labels) &&
+        'giantswarm.io/prevent-deletion' in oldObject.metadata.labels
   rules:
   - name: block-resource-deletion-if-has-prevent-deletion-label
     match:
@@ -37,6 +43,8 @@ spec:
 {{- range .Values.preventDeletionLabelPolicy.gvk }}
           - {{ . }}
 {{- end }}
+          operations:
+          - DELETE
           selector:
             matchLabels:
               giantswarm.io/prevent-deletion: "*"
