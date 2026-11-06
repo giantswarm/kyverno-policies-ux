@@ -217,3 +217,122 @@ spec:
           apiVersion: cluster.x-k8s.io/v1beta2
           kind: Cluster
           name: protected-v1beta2
+
+  # Clusters deployed as Flux HelmReleases carry the label on the HelmRelease, as they did on the App CR.
+  - name: allow-delete-helmrelease-without-label
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-unprotected
+          spec:
+            interval: 10m
+            chartRef:
+              kind: OCIRepository
+              name: hr-unprotected
+    - delete:
+        ref:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          name: hr-unprotected
+
+  # Like the protected ConfigMap, this is deleted in the last step, after removing the label
+  - name: create-protected-helmrelease
+    try:
+    - apply:
+        resource:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            name: hr-protected
+            labels:
+              giantswarm.io/prevent-deletion: "true"
+          spec:
+            interval: 10m
+            chartRef:
+              kind: OCIRepository
+              name: hr-protected
+
+  - name: deny-delete-helmrelease-with-prevent-label
+    try:
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          name: hr-protected
+
+  - name: allow-delete-protected-helmrelease-after-label-removal
+    try:
+    - script:
+        content: |
+          kubectl label helmreleases.helm.toolkit.fluxcd.io hr-protected "giantswarm.io/prevent-deletion-" -n "$NAMESPACE"
+    - delete:
+        expect:
+        - check:
+            ($error != null): false
+        ref:
+          apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          name: hr-protected
+
+  # The OCIRepository a cluster HelmRelease reads its chart from carries the same label.
+  - name: allow-delete-ocirepository-without-label
+    try:
+    - apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: oci-unprotected
+          spec:
+            interval: 10m
+            url: oci://gsoci.azurecr.io/charts/giantswarm/release-aws
+    - delete:
+        ref:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          name: oci-unprotected
+
+  - name: create-protected-ocirepository
+    try:
+    - apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: oci-protected
+            labels:
+              giantswarm.io/prevent-deletion: "true"
+          spec:
+            interval: 10m
+            url: oci://gsoci.azurecr.io/charts/giantswarm/release-aws
+
+  - name: deny-delete-ocirepository-with-prevent-label
+    try:
+    - delete:
+        expect:
+        - check:
+            ($error != null): true
+        ref:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          name: oci-protected
+
+  - name: allow-delete-protected-ocirepository-after-label-removal
+    try:
+    - script:
+        content: |
+          kubectl label ocirepositories.source.toolkit.fluxcd.io oci-protected "giantswarm.io/prevent-deletion-" -n "$NAMESPACE"
+    - delete:
+        expect:
+        - check:
+            ($error != null): false
+        ref:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          name: oci-protected

@@ -18,10 +18,12 @@ preventDeletionLabelPolicy:
     - AzureMachinePool
     - ConfigMap
     - G8sControlPlane
+    - HelmRelease
     - KubeadmControlPlane
     - MachineDeployment
     - MachinePool
     - Namespace
+    - OCIRepository
     - Organization
     - Secret
     - VCDCluster

@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add `HelmRelease` and `OCIRepository` to the `block-resource-deletion-if-has-prevent-deletion-label` policy, so clusters deployed as Flux HelmReleases keep the deletion protection they had as App CRs.
+
 ## [0.15.2] - 2026-10-22
 
 ### Added
