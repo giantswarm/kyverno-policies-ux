@@ -48,10 +48,11 @@ spec:
         - name: name
           value: block-resource-deletion-if-has-prevent-deletion-label
 
-  # The policy only acts on DELETE of labelled objects, so Kyverno gives it a dedicated (fine-grained)
-  # webhook that registers only DELETE and lets the API server skip unlabelled objects via matchConditions.
-  # Other policies matching the same kinds stay in the general `validate.kyverno.svc-fail` webhook.
-  - name: webhook-registers-only-delete-for-labelled-objects
+  # The policy only acts on DELETE, so it registers only DELETE in the general Kyverno webhook.
+  # `apps` and `ocirepositories` are kinds no other policy in this chart registers there, so their
+  # webhook rules show this policy's scope; other kinds (configmaps, secrets, ...) also carry
+  # operations from other policies.
+  - name: webhook-registers-only-delete-for-kinds-only-this-policy-matches
     try:
     - assert:
         resource:
@@ -59,15 +60,11 @@ spec:
           kind: ValidatingWebhookConfiguration
           metadata:
             name: kyverno-resource-validating-webhook-cfg
-          (webhooks[?name == 'validate.kyverno.svc-fail-finegrained-block-resource-deletion-if-has-prevent-deletion-label']):
-          - matchConditions:
-            - name: has-prevent-deletion-label
-              expression: >-
-                has(oldObject.metadata.labels) && 'giantswarm.io/prevent-deletion' in oldObject.metadata.labels
-            (contains(rules[].resources[], 'configmaps')): true
-            (contains(rules[].resources[], 'secrets')): true
-            (length(rules) > `0`): true
-            (length(rules[?operations != `["DELETE"]`])): 0
+          (webhooks[?name == 'validate.kyverno.svc-fail']):
+          - (length(rules[?contains(resources, 'apps')]) > `0`): true
+            (length(rules[?contains(resources, 'apps') && operations != `["DELETE"]`])): 0
+            (length(rules[?contains(resources, 'ocirepositories')]) > `0`): true
+            (length(rules[?contains(resources, 'ocirepositories') && operations != `["DELETE"]`])): 0
 
   - name: allow-delete-without-label
     try:
