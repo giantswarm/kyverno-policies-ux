@@ -48,6 +48,24 @@ spec:
         - name: name
           value: block-resource-deletion-if-has-prevent-deletion-label
 
+  # The policy only acts on DELETE, so it registers only DELETE in the general Kyverno webhook.
+  # `apps` and `ocirepositories` are kinds no other policy in this chart registers there, so their
+  # webhook rules show this policy's scope; other kinds (configmaps, secrets, ...) also carry
+  # operations from other policies.
+  - name: webhook-registers-only-delete-for-kinds-only-this-policy-matches
+    try:
+    - assert:
+        resource:
+          apiVersion: admissionregistration.k8s.io/v1
+          kind: ValidatingWebhookConfiguration
+          metadata:
+            name: kyverno-resource-validating-webhook-cfg
+          (webhooks[?name == 'validate.kyverno.svc-fail']):
+          - (length(rules[?contains(resources, 'apps')]) > `0`): true
+            (length(rules[?contains(resources, 'apps') && operations != `["DELETE"]`])): 0
+            (length(rules[?contains(resources, 'ocirepositories')]) > `0`): true
+            (length(rules[?contains(resources, 'ocirepositories') && operations != `["DELETE"]`])): 0
+
   - name: allow-delete-without-label
     try:
     - apply:
@@ -82,6 +100,22 @@ spec:
           apiVersion: v1
           kind: ConfigMap
           name: cm-with-prevent-label
+
+  # The policy never blocked updates of protected objects and must not start to.
+  - name: allow-update-with-prevent-label
+    try:
+    - script:
+        content: |
+          kubectl label configmap cm-with-prevent-label "example.giantswarm.io/updated=true" -n "$NAMESPACE"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-with-prevent-label
+            labels:
+              giantswarm.io/prevent-deletion: "true"
+              example.giantswarm.io/updated: "true"
 
   - name: allow-delete-after-label-removal
     try:

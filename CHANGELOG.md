@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Register the `block-resource-deletion-if-has-prevent-deletion-label` policy for `DELETE` admission requests only.
+
 ## [0.16.0] - 2026-11-06
 
 ### Added

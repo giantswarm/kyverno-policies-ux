@@ -37,6 +37,8 @@ spec:
 {{- range .Values.preventDeletionLabelPolicy.gvk }}
           - {{ . }}
 {{- end }}
+          operations:
+          - DELETE
           selector:
             matchLabels:
               giantswarm.io/prevent-deletion: "*"
