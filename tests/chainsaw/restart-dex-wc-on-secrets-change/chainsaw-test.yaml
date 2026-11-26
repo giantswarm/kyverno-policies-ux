@@ -93,3 +93,61 @@ spec:
               metadata:
                 annotations:
                   kyverno.io/restart-reason: config-update
+
+  - name: create-tunnel-bundle-secret-initial
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnelport-spiffe-bundle
+          data:
+            svid.pem: c3ZpZC0x
+            svid_bundle.pem: YnVuZGxlLTE=
+
+  # SVID renewal leaves the trust bundle unchanged — no restart
+  - name: no-mutation-on-svid-renewal
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnelport-spiffe-bundle
+          data:
+            svid.pem: c3ZpZC0y
+            svid_bundle.pem: YnVuZGxlLTE=
+    - script:
+        content: |
+          reason=$(kubectl get deployment dex -n "$NAMESPACE" -o jsonpath='{.spec.template.metadata.annotations.kyverno\.io/restart-reason}')
+          if [ "$reason" != "config-update" ]; then
+            echo "ERROR: Deployment was mutated on SVID renewal (got restart-reason: $reason)"
+            exit 1
+          fi
+          echo "OK: restart-reason unchanged"
+
+  # Trust bundle rotation — mutation is triggered
+  - name: update-tunnel-bundle-triggers-restart
+    try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnelport-spiffe-bundle
+          data:
+            svid.pem: c3ZpZC0y
+            svid_bundle.pem: YnVuZGxlLTI=
+    - assert:
+        timeout: 30s
+        resource:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: dex
+          spec:
+            template:
+              metadata:
+                annotations:
+                  kyverno.io/restart-reason: tunnel-ca-update
