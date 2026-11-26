@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Restart the workload cluster `dex` Deployment when the trust bundle (`svid_bundle.pem`) in the `tunnelport-spiffe-bundle` Secret changes. Routine SVID renewals in the same Secret do not trigger a restart.
+
 ### Changed
 
 - Add the `io.giantswarm.application.audience` and `io.giantswarm.application.managed` annotations and `keywords` to `Chart.yaml`, as the chart metadata standard requires.
