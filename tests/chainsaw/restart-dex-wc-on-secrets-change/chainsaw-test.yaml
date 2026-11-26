@@ -99,7 +99,7 @@ spec:
     - apply:
         resource:
           apiVersion: v1
-          kind: Secret
+          kind: Secret  # gitleaks:allow test fixture, values are base64 of svid-N and bundle-N
           metadata:
             name: tunnelport-spiffe-bundle
           data:
@@ -112,7 +112,7 @@ spec:
     - apply:
         resource:
           apiVersion: v1
-          kind: Secret
+          kind: Secret  # gitleaks:allow test fixture, values are base64 of svid-N and bundle-N
           metadata:
             name: tunnelport-spiffe-bundle
           data:
@@ -133,7 +133,7 @@ spec:
     - apply:
         resource:
           apiVersion: v1
-          kind: Secret
+          kind: Secret  # gitleaks:allow test fixture, values are base64 of svid-N and bundle-N
           metadata:
             name: tunnelport-spiffe-bundle
           data:
